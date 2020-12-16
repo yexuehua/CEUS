@@ -290,7 +290,7 @@ void USToolKitView::CreateQtPartControl(QWidget *parent)
 	//m_Controls.USPreprocessDataSelectionComBox->SetPredicate(m_IsOfTypeImagePredicate);
 	//m_Controls.USPreprocessDataSelectionComBox->SetAutoSelectNewItems(false);
 	//connect(m_Controls.USPreprocessDataSelectionComBox, SIGNAL(activated(int)), this, SLOT(USPreprocessDataSelection(int)));
-	//connect(m_Controls.USRGBConvertGrayButton, SIGNAL(clicked()), this, SLOT(USRGBConvertGray()));
+	connect(m_Controls.USQuantitationButton, SIGNAL(clicked()), this, SLOT(USQuantitation()));
 	//connect(m_Controls.USRGBConvertGrayButton, SIGNAL(clicked()), this, SLOT(USExtractChannel()));
 	//connect(m_Controls.DCEUSDynamicCheckbox,)
 
@@ -666,6 +666,86 @@ void USToolKitView::USPreprocessDataSelection(int index) {
 	mitk::RenderingManager::GetInstance()->RequestUpdateAll();
 }
 */
+
+void USToolKitView::USQuantitation()
+{
+	mitk::DataStorage::SetOfObjects::ConstPointer _NodeSet = this->GetDataStorage()->GetAll();
+	if (!_NodeSet)
+	{
+		return;
+	}
+
+	typedef itk::Image<unsigned char, 3> charImageType;
+
+	mitk::DataNode* node;
+	for (mitk::DataStorage::SetOfObjects::ConstIterator it = _NodeSet->Begin(); it != _NodeSet->End(); it++)
+	{
+		node = const_cast<mitk::DataNode*>(it->Value().GetPointer());
+		if (!node)
+		{
+			return;
+		}
+		mitk::Image::Pointer mitkInImage = dynamic_cast<mitk::Image*>(node->GetData());
+		if (!mitkInImage)
+			continue;
+
+		std::string nodeName = node->GetName();
+		MITK_INFO << "name: " << nodeName;
+
+		typedef itk::RGBPixel<unsigned char> PixelType;
+		typedef itk::Image< PixelType, 3 > ItkRgbImageType;
+		typedef mitk::ImageToItk< ItkRgbImageType > CasterType;
+		CasterType::Pointer caster = CasterType::New();
+		caster->SetInput(mitkInImage);
+		caster->Update();
+		ItkRgbImageType::Pointer itkInImage = caster->GetOutput();
+
+		charImageType::RegionType newRegion;
+		charImageType::SizeType newSize = itkInImage->GetLargestPossibleRegion().GetSize();
+		newRegion.SetSize(itkInImage->GetLargestPossibleRegion().GetSize());
+		newRegion.SetIndex(itkInImage->GetLargestPossibleRegion().GetIndex());
+
+
+		charImageType::SpacingType newSpacing;
+		newSpacing[0] = itkInImage->GetSpacing()[0];
+		newSpacing[1] = itkInImage->GetSpacing()[1];
+		newSpacing[2] = itkInImage->GetSpacing()[2];
+
+		charImageType::Pointer greyImage = charImageType::New();
+		greyImage->SetRegions(newRegion);
+		greyImage->SetSpacing(newSpacing);
+		greyImage->SetOrigin(itkInImage->GetOrigin());
+		greyImage->SetDirection(itkInImage->GetDirection());
+		greyImage->Allocate();
+
+		int x = mitkInImage->GetDimensions()[0];
+		int y = mitkInImage->GetDimensions()[1];
+		int z = mitkInImage->GetDimensions()[2];
+		int Vmax = 32767;
+		int DR = 60;
+
+		//convert RGB to gray
+		ItkRgbImageType::IndexType pixelIndex;
+		for (int i = 0; i < x; i++) {
+			for (int j = 0; j < y; j++) {
+				for (int k = 0; k < z; k++) {
+
+					pixelIndex[0] = i;
+					pixelIndex[1] = j;
+					pixelIndex[2] = k;
+					PixelType onePixel = itkInImage->GetPixel(pixelIndex);
+					int greyPixel = (onePixel.GetRed() * 30 + onePixel.GetGreen() * 59 + onePixel.GetBlue() * 11 + 50) / 100;
+					greyImage->SetPixel(pixelIndex, greyPixel);
+					MITK_INFO << (Vmax**2)
+				}
+			}
+		}
+
+
+
+	}
+}
+
 
 
 /*

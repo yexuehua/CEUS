@@ -97,6 +97,7 @@ protected slots:
 	
 	//data loading
 	void LoadDicomUS();
+	void USQuantitation();
 	//void USPreprocessDataSelection(int index);
 	void USRGBConvertGray();
 	//void USExtractChannel();
