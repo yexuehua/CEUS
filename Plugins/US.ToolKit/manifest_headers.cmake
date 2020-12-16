@@ -1,0 +1,5 @@
+set(Plugin-Name "Ultrasound Kit")
+set(Plugin-Version "1.0")
+set(Plugin-Vendor "GE Healthcare")
+set(Plugin-ContactAddress "")
+set(Require-Plugin org.mitk.gui.qt.common)
