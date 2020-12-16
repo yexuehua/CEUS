@@ -731,7 +731,6 @@ void USToolKitView::USQuantitation()
 		int Vmax = 32767;
 		int DR = 60;
 
-
 		//convert RGB to gray
 		ItkRgbImageType::IndexType pixelIndex;
 		for (int i = 0; i < x; i++) {
@@ -755,7 +754,25 @@ void USToolKitView::USQuantitation()
 		mitk::CastToMitkImage(EPImage, EPMitkImage);
 		mitk::CastToMitkImage(greyImage, greyMitkImage);
 
+		itk::Index<3> EPidx = { {100,100,100} };
+
+		MITK_INFO << EPMitkImage->GetScalarValue2ndMax();
 		MITK_INFO << EPMitkImage->GetScalarValueMax();
+		MITK_INFO << EPMitkImage->GetScalarValue2ndMaxNoRecompute();
+		MITK_INFO << EPMitkImage->GetPixelValueByIndex(EPidx);
+		MITK_INFO << mitkInImage->GetPropertyList();
+
+		mitk::TimeGeometry* geometry = mitkInImage->GetTimeGeometry();
+		//timepoint
+		std::vector<double> tempGrid;
+		if (geometry)
+		{
+			for (int i = 0; i < mitkInImage->GetTimeSteps(); i++)
+			{
+				tempGrid.push_back(geometry->TimeStepToTimePoint(i) / 1000.0);//units: s
+				MITK_INFO << "the " << i << "th timepoint is: " << (geometry->TimeStepToTimePoint(i) / 1000.0);
+			}
+		}
 
 
 	}
