@@ -718,11 +718,19 @@ void USToolKitView::USQuantitation()
 		greyImage->SetDirection(itkInImage->GetDirection());
 		greyImage->Allocate();
 
+		charImageType::Pointer EPImage = charImageType::New();
+		EPImage->SetRegions(newRegion);
+		EPImage->SetSpacing(newSpacing);
+		EPImage->SetOrigin(itkInImage->GetOrigin());
+		EPImage->SetDirection(itkInImage->GetDirection());
+		EPImage->Allocate();
+
 		int x = mitkInImage->GetDimensions()[0];
 		int y = mitkInImage->GetDimensions()[1];
 		int z = mitkInImage->GetDimensions()[2];
 		int Vmax = 32767;
 		int DR = 60;
+
 
 		//convert RGB to gray
 		ItkRgbImageType::IndexType pixelIndex;
@@ -736,11 +744,18 @@ void USToolKitView::USQuantitation()
 					PixelType onePixel = itkInImage->GetPixel(pixelIndex);
 					int greyPixel = (onePixel.GetRed() * 30 + onePixel.GetGreen() * 59 + onePixel.GetBlue() * 11 + 50) / 100;
 					greyImage->SetPixel(pixelIndex, greyPixel);
-					MITK_INFO << (Vmax**2)
+					EPImage->SetPixel(pixelIndex, pow(Vmax, 2) * pow(10, ((greyPixel / 255 - 1) * DR) / 10));
 				}
 			}
 		}
 
+		mitk::Image::Pointer EPMitkImage = mitk::Image::New();
+		mitk::Image::Pointer greyMitkImage = mitk::Image::New();
+
+		mitk::CastToMitkImage(EPImage, EPMitkImage);
+		mitk::CastToMitkImage(greyImage, greyMitkImage);
+
+		MITK_INFO << EPMitkImage->GetScalarValueMax();
 
 
 	}

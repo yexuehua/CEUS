@@ -319,106 +319,21 @@
             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="currentIndex">
-            <number>0</number>
+            <number>1</number>
            </property>
-           <widget class="QWidget" name="page">
+           <widget class="QWidget" name="TIC">
             <property name="geometry">
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>484</width>
-              <height>817</height>
-             </rect>
-            </property>
-            <attribute name="label">
-             <string>Page 1</string>
-            </attribute>
-            <widget class="QWidget" name="layoutWidget">
-             <property name="geometry">
-              <rect>
-               <x>6</x>
-               <y>6</y>
-               <width>260</width>
-               <height>268</height>
-              </rect>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout_5">
-              <item>
-               <layout class="QGridLayout" name="gridLayout_2">
-                <item row="0" column="0">
-                 <widget class="QLabel" name="label_9">
-                  <property name="enabled">
-                   <bool>true</bool>
-                  </property>
-                  <property name="text">
-                   <string>Select parameter</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QComboBox" name="comboBox_2"/>
-                </item>
-                <item row="0" column="2">
-                 <widget class="QPushButton" name="pushButton_5">
-                  <property name="text">
-                   <string>Save</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <layout class="QVBoxLayout" name="verticalLayout_4">
-                <item>
-                 <widget class="QTableWidget" name="tableWidget">
-                  <row>
-                   <property name="text">
-                    <string>Reference</string>
-                   </property>
-                  </row>
-                  <row>
-                   <property name="text">
-                    <string>Lesion</string>
-                   </property>
-                  </row>
-                  <column>
-                   <property name="text">
-                    <string>value</string>
-                   </property>
-                  </column>
-                 </widget>
-                </item>
-                <item>
-                 <spacer name="verticalSpacer_2">
-                  <property name="orientation">
-                   <enum>Qt::Vertical</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>20</width>
-                    <height>40</height>
-                   </size>
-                  </property>
-                 </spacer>
-                </item>
-               </layout>
-              </item>
-             </layout>
-            </widget>
-           </widget>
-           <widget class="QWidget" name="page2">
-            <property name="geometry">
-             <rect>
-              <x>0</x>
-              <y>0</y>
-              <width>116</width>
-              <height>124</height>
+              <width>470</width>
+              <height>760</height>
              </rect>
             </property>
             <attribute name="label">
              <string>Page 2</string>
             </attribute>
-            <layout class="QVBoxLayout" name="verticalLayout_10">
+            <layout class="QVBoxLayout" name="verticalLayout_9">
              <item>
               <widget class="QGroupBox" name="groupBox">
                <property name="title">
@@ -426,10 +341,26 @@
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_2">
                 <item>
-                 <widget class="QGraphicsView" name="graphicsView"/>
+                 <widget class="QmitkPlotWidget" name="widgetPlot" native="true">
+                  <property name="enabled">
+                   <bool>true</bool>
+                  </property>
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>400</height>
+                   </size>
+                  </property>
+                 </widget>
                 </item>
                 <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_3">
+                 <layout class="QHBoxLayout" name="horizontalLayout_2">
                   <item>
                    <widget class="QPushButton" name="pushButton_6">
                     <property name="text">
@@ -467,6 +398,85 @@
                 </size>
                </property>
               </spacer>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QWidget" name="param">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>470</width>
+              <height>760</height>
+             </rect>
+            </property>
+            <attribute name="label">
+             <string>Page 1</string>
+            </attribute>
+            <layout class="QVBoxLayout" name="verticalLayout_10">
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout_5">
+               <item>
+                <layout class="QGridLayout" name="gridLayout_2">
+                 <item row="0" column="0">
+                  <widget class="QLabel" name="label_9">
+                   <property name="enabled">
+                    <bool>true</bool>
+                   </property>
+                   <property name="text">
+                    <string>Select parameter</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="1">
+                  <widget class="QComboBox" name="comboBox_2"/>
+                 </item>
+                 <item row="0" column="2">
+                  <widget class="QPushButton" name="pushButton_5">
+                   <property name="text">
+                    <string>Save</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <layout class="QVBoxLayout" name="verticalLayout_4">
+                 <item>
+                  <widget class="QTableWidget" name="tableWidget">
+                   <row>
+                    <property name="text">
+                     <string>Reference</string>
+                    </property>
+                   </row>
+                   <row>
+                    <property name="text">
+                     <string>Lesion</string>
+                    </property>
+                   </row>
+                   <column>
+                    <property name="text">
+                     <string>value</string>
+                    </property>
+                   </column>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="verticalSpacer_2">
+                   <property name="orientation">
+                    <enum>Qt::Vertical</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>20</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </item>
+              </layout>
              </item>
             </layout>
            </widget>
@@ -649,8 +659,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>280</width>
-               <height>397</height>
+               <width>314</width>
+               <height>422</height>
               </rect>
              </property>
              <attribute name="label">
@@ -1075,8 +1085,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>468</width>
-               <height>984</height>
+               <width>452</width>
+               <height>947</height>
               </rect>
              </property>
              <attribute name="label">
@@ -1266,6 +1276,11 @@
   </layout>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>QmitkPlotWidget</class>
+   <extends>QWidget</extends>
+   <header>QmitkPlotWidget.h</header>
+  </customwidget>
   <customwidget>
    <class>QmitkDataStorageComboBox</class>
    <extends>QComboBox</extends>
