@@ -482,6 +482,7 @@ void USToolKitView::LoadDicomUS() {
 
 		//Â·¾¶
 		std::string pathImage = (multiUSDataPath[i]).toStdString() + "/" + (multiUSFileName[i]).toStdString();
+		
 		DcmFileFormat dfile;
 		OFCondition status = dfile.loadFile(OFFilename(pathImage.c_str()));
 		MITK_INFO << pathImage.c_str();
@@ -491,12 +492,20 @@ void USToolKitView::LoadDicomUS() {
 			return;
 		}
 		DcmDataset *data = dfile.getDataset();
-		#define DCM_FrameTimeVector  DcmTagKey(0x0018, 0x5010)
-		MITK_INFO << data->getETag();
+		#define DCM_FrameTimeVector  DcmTagKey(0x0018, 0x1065)
 		OFString FrameTimeVector;
-		data->findAndGetOFString(DCM_FrameTimeVector, FrameTimeVector);
+		data->findAndGetOFStringArray(DCM_FrameTimeVector, FrameTimeVector);
 		std::string dataFrameTimeVector = FrameTimeVector.c_str();
-		MITK_INFO << FrameTimeVector.length();
+		int RowCount = m_Controls.USLoadTableWidget->rowCount();
+		QString QdataFrameTimevector = QString::fromStdString(dataFrameTimeVector);
+		QString QgroupElement = "(0x0018, 0x1065)";
+		QString Qdiscription = "FrameTimeVector";
+		m_Controls.USLoadTableWidget->insertRow(RowCount);
+		m_Controls.USLoadTableWidget->setItem(RowCount, 0, new QTableWidgetItem(QgroupElement));
+		m_Controls.USLoadTableWidget->setItem(RowCount, 1, new QTableWidgetItem(Qdiscription));
+		m_Controls.USLoadTableWidget->setItem(RowCount, 2, new QTableWidgetItem(QdataFrameTimevector));
+
+
 		//ÏñËØÀàÐÍ
 		typedef itk::GDCMImageIO DcmIoType;
 		DcmIoType::Pointer io = DcmIoType::New();
@@ -1048,9 +1057,6 @@ void USToolKitView::USPreprocessDataSelection(int index) {
 //}
 
 
-
-
-
 void USToolKitView::USQuantitation()
 {
 	mitk::DataStorage::SetOfObjects::ConstPointer _NodeSet = this->GetDataStorage()->GetAll();
@@ -1141,8 +1147,26 @@ void USToolKitView::USQuantitation()
 
 		mitk::Image::Pointer greyMitkImage = mitk::Image::New();
 		mitk::CastToMitkImage(greyImage, greyMitkImage);
-		MITK_INFO << EPdata[100][100][100];
 
+		//processing the time points
+		QString Qtimepoints = m_Controls.USLoadTableWidget->item(0, 2)->text();
+		std::string timepoints = Qtimepoints.toStdString();
+		std::string tempstring;
+		std::vector<double> tempGrid;
+		int lenth;
+		int tempvalue;
+		for (auto ch : timepoints)
+		{
+			tempstring.push_back(ch);
+			if (ch == '\\') {
+				tempGrid.push_back(stof(tempstring));
+				tempstring.clear();
+			}
+		}
+		for (int i = 0; i<tempGrid.size();i++)
+			MITK_INFO << tempGrid[i];
+
+		MITK_INFO << tempGrid.size();
 	}
 }
 
