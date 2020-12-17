@@ -1,4 +1,4 @@
-
+﻿
 // Blueberry
 #include <berryISelectionService.h>
 #include <berryIWorkbenchWindow.h>
@@ -473,17 +473,31 @@ void USToolKitView::LoadDicomUS() {
 
 	int phase = multiUSDataName.size();
 
-	////��˳�����ݼ���
+	////°´Ë³ÐòÊý¾Ý¼ÓÔØ
 	mitk::LevelWindow levelwindow;
 	levelwindow.SetLevelWindow(128, 256);
 
 
 	for (int i = 0; i < phase; i++) {
 
-		//·��
+		//Â·¾¶
 		std::string pathImage = (multiUSDataPath[i]).toStdString() + "/" + (multiUSFileName[i]).toStdString();
-
-		//��������
+		DcmFileFormat dfile;
+		OFCondition status = dfile.loadFile(OFFilename(pathImage.c_str()));
+		MITK_INFO << pathImage.c_str();
+		if (status.bad())
+		{
+			MITK_INFO << "No dicom to load";
+			return;
+		}
+		DcmDataset *data = dfile.getDataset();
+		#define DCM_FrameTimeVector  DcmTagKey(0x0018, 0x5010)
+		MITK_INFO << data->getETag();
+		OFString FrameTimeVector;
+		data->findAndGetOFString(DCM_FrameTimeVector, FrameTimeVector);
+		std::string dataFrameTimeVector = FrameTimeVector.c_str();
+		MITK_INFO << FrameTimeVector.length();
+		//ÏñËØÀàÐÍ
 		typedef itk::GDCMImageIO DcmIoType;
 		DcmIoType::Pointer io = DcmIoType::New();
 		if (io->CanReadFile(pathImage.c_str()))
@@ -667,6 +681,376 @@ void USToolKitView::USPreprocessDataSelection(int index) {
 }
 */
 
+
+//bool USToolKitView::ShowSUVInfo(std::string USDicomPath)
+//{
+//	m_Controls.lineEditWeight->clear();
+//	m_Controls.lineEditHeight->clear();
+//	m_Controls.lineEditInjectDose->clear();
+//	m_Controls.lineEditInjectTime->clear();
+//	m_Controls.lineEditSeriesTime->clear();
+//	m_Controls.lineEditSex->clear();
+//	m_Controls.lineEditHalf->clear();
+//	m_Controls.lineEditDecayCorrection->clear();
+//
+//
+//	typedef itk::GDCMSeriesFileNames InputNamesGeneratorType;
+//	//获取文件夹中所有dicom序列
+//	InputNamesGeneratorType::Pointer inputNames = InputNamesGeneratorType::New();
+//	inputNames->SetUseSeriesDetails(true);
+//	inputNames->SetDirectory(USDicomPath);
+//
+//	itk::SerieUIDContainer seriesUIDs = inputNames->GetSeriesUIDs();
+//
+//	//获取文件名
+//	typedef short PixelValueType;
+//	typedef itk::Image< PixelValueType, 3 > VolumeType;
+//	typedef itk::ImageSeriesReader< VolumeType > VolumeReaderType;
+//	const VolumeReaderType::FileNamesContainer & filenames = inputNames->GetFileNames(seriesUIDs[0]);
+//	std::string firstDicomFileName = filenames.front();
+//
+//	//加载文件
+//	DcmFileFormat dfile;
+//	OFCondition status = dfile.loadFile(OFFilename(firstDicomFileName.c_str()));
+//	//MITK_INFO << firstDicomFileName.c_str();
+//
+//	if (status.bad())
+//	{
+//		return false;
+//	}
+//
+//
+//	//获取数据
+//	DcmDataset *data = dfile.getDataset();
+//
+//	#define DCM_Modality   DcmTagKey(0x0008, 0x0060)
+//	#define DCM_injectionTime  DcmTagKey(0x0018, 0x1072)
+//	#define DCM_injectedDose  DcmTagKey(0x0018, 0x1074)
+//	#define DCM_volumeUnits  DcmTagKey(0x0054, 0x1001)
+//	#define DCM_height  DcmTagKey(0x0010, 0x1020)
+//	#define DCM_weight  DcmTagKey(0x0010, 0x1030)
+//	#define DCM_patientSex  DcmTagKey(0x0010, 0x0040)
+//	#define DCM_radionuclideHalfLife  DcmTagKey(0x0018, 0x1075)
+//	#define DCM_SeriesTimes DcmTagKey(0x0008, 0x0031)
+//	#define DCM_DecayCorrection DcmTagKey(0x0054, 0x1102)
+//
+//	OFString Modality;
+//	data->findAndGetOFString(DCM_Modality, Modality);
+//	std::string dataModality = Modality.c_str();
+//
+//	OFString injectionTime;
+//	data->findAndGetOFString(DCM_injectionTime, injectionTime, 0, OFTrue);
+//	std::string dataInjectionTime = injectionTime.c_str();
+//
+//	OFString injectedDose;
+//	data->findAndGetOFString(DCM_injectedDose, injectedDose, 0, OFTrue);
+//	std::string dataInjectedDose = injectedDose.c_str();
+//
+//
+//	OFString volumeUnits;
+//	data->findAndGetOFString(DCM_volumeUnits, volumeUnits, 0, OFTrue);
+//	std::string dataVolumeUnits = volumeUnits.c_str();
+//
+//	OFString height;
+//	data->findAndGetOFString(DCM_height, height);
+//	std::string dataHeight = height.c_str();
+//
+//	OFString weight;
+//	data->findAndGetOFString(DCM_weight, weight);
+//	std::string dataWeight = weight.c_str();
+//
+//	OFString patientSex;
+//	data->findAndGetOFString(DCM_patientSex, patientSex);
+//	std::string dataPatientSex = patientSex.c_str();
+//
+//	OFString radionuclideHalfLife;
+//	data->findAndGetOFString(DCM_radionuclideHalfLife, radionuclideHalfLife, 0, OFTrue);
+//	std::string dataRadionuclideHalfLife = radionuclideHalfLife.c_str();
+//
+//	OFString seriesTime;
+//	data->findAndGetOFString(DCM_SeriesTimes, seriesTime);
+//	std::string dataSeriesTime = seriesTime.c_str();
+//
+//	OFString DecayCorrection;
+//	data->findAndGetOFString(DCM_DecayCorrection, DecayCorrection);
+//	std::string dataDecayCorrection = DecayCorrection.c_str();
+//
+//
+//	MITK_INFO << "output dicom tag info:";
+//	MITK_INFO << "modality: " << dataModality;
+//	MITK_INFO << "injectionTime: " << dataInjectionTime;
+//	MITK_INFO << "injectedDose: " << dataInjectedDose;
+//	MITK_INFO << "volumeUnits: " << dataVolumeUnits;
+//	MITK_INFO << "height: " << dataHeight;
+//	MITK_INFO << "weight: " << dataWeight;
+//	MITK_INFO << "patientSex: " << dataPatientSex;
+//	MITK_INFO << "radionuclideHalfLife: " << dataRadionuclideHalfLife;
+//	MITK_INFO << "seriesTime: " << dataSeriesTime;
+//
+//	//注射时间格式转换
+//	std::string tag;
+//	std::string yearstr;
+//	std::string monthstr;
+//	std::string daystr;
+//	std::string hourstr;
+//	std::string minutestr;
+//	std::string secondstr;
+//	int len;
+//	if (dataInjectionTime.c_str() != NULL && *(dataInjectionTime.c_str()) != '\0')
+//	{
+//		len = dataInjectionTime.length();
+//		hourstr.clear();
+//		minutestr.clear();
+//		secondstr.clear();
+//		if (len >= 2)
+//		{
+//			hourstr = dataInjectionTime.substr(0, 2);
+//		}
+//		else
+//		{
+//			hourstr = "00";
+//		}
+//		if (len >= 4)
+//		{
+//			minutestr = dataInjectionTime.substr(2, 2);
+//		}
+//		else
+//		{
+//			minutestr = "00";
+//		}
+//		if (len >= 6)
+//		{
+//			secondstr = dataInjectionTime.substr(4);
+//		}
+//		else
+//		{
+//			secondstr = "00";
+//		}
+//		tag.clear();
+//		tag = hourstr.c_str();
+//		tag += ":";
+//		tag += minutestr.c_str();
+//		tag += ":";
+//		tag += secondstr.c_str();
+//		dataInjectionTime = tag.c_str();
+//	}
+//	else {
+//		dataInjectionTime = "";
+//		MITK_WARN << " No injection time ";
+//
+//	}
+//
+//
+//	if (dataVolumeUnits.c_str() != NULL && *(dataVolumeUnits.c_str()) != '\0')
+//	{
+//		//--- I think these are piled together. MBq ml... search for all.
+//		std::string units = dataVolumeUnits.c_str();
+//		if ((units.find("BQML") != std::string::npos) ||
+//			(units.find("BQML") != std::string::npos))
+//		{
+//			dataVolumeUnits = "Bq";
+//		}
+//		else if ((units.find("MBq") != std::string::npos) ||
+//			(units.find("MBQ") != std::string::npos))
+//		{
+//			dataVolumeUnits = "MBq";
+//		}
+//		else if ((units.find("kBq") != std::string::npos) ||
+//			(units.find("kBQ") != std::string::npos) ||
+//			(units.find("KBQ") != std::string::npos))
+//		{
+//			dataVolumeUnits = "kBq";
+//		}
+//		else if ((units.find("mBq") != std::string::npos) ||
+//			(units.find("mBQ") != std::string::npos))
+//		{
+//			dataVolumeUnits = "mBq";
+//		}
+//		else if ((units.find("uBq") != std::string::npos) ||
+//			(units.find("uBQ") != std::string::npos))
+//		{
+//			dataVolumeUnits = "uBq";
+//		}
+//		else if ((units.find("Bq") != std::string::npos) ||
+//			(units.find("BQ") != std::string::npos))
+//		{
+//			dataVolumeUnits = "Bq";
+//		}
+//		else if ((units.find("MCi") != std::string::npos) ||
+//			(units.find("MCI") != std::string::npos))
+//		{
+//			dataVolumeUnits = "MCi";
+//		}
+//		else if ((units.find("kCi") != std::string::npos) ||
+//			(units.find("kCI") != std::string::npos) ||
+//			(units.find("KCI") != std::string::npos))
+//		{
+//			dataVolumeUnits = "kCi";
+//		}
+//		else if ((units.find("mCi") != std::string::npos) ||
+//			(units.find("mCI") != std::string::npos))
+//		{
+//			dataVolumeUnits = "mCi";
+//		}
+//		else if ((units.find("uCi") != std::string::npos) ||
+//			(units.find("uCI") != std::string::npos))
+//		{
+//			dataVolumeUnits = "uCi";
+//		}
+//		else if ((units.find("Ci") != std::string::npos) ||
+//			(units.find("CI") != std::string::npos))
+//		{
+//			dataVolumeUnits = "Ci";
+//		}
+//	}
+//	else
+//	{
+//		dataVolumeUnits = "MBq";
+//		MITK_WARN << " No radioactivity units, default is MBq ";
+//	}
+//
+//	//--- SeriesTime
+//	if (dataSeriesTime.c_str() != NULL && *(dataSeriesTime.c_str()) != '\0')
+//	{
+//		hourstr.clear();
+//		minutestr.clear();
+//		secondstr.clear();
+//		len = dataSeriesTime.length();
+//		if (len >= 2)
+//		{
+//			hourstr = dataSeriesTime.substr(0, 2);
+//		}
+//		else
+//		{
+//			hourstr = "00";
+//		}
+//		if (len >= 4)
+//		{
+//			minutestr = dataSeriesTime.substr(2, 2);
+//		}
+//		else
+//		{
+//			minutestr = "00";
+//		}
+//		if (len >= 6)
+//		{
+//			secondstr = dataSeriesTime.substr(4);
+//		}
+//		else
+//		{
+//			secondstr = "00";
+//		}
+//		tag.clear();
+//		tag = hourstr.c_str();
+//		tag += ":";
+//		tag += minutestr.c_str();
+//		tag += ":";
+//		tag += secondstr.c_str();
+//		dataSeriesTime = tag.c_str();
+//	}
+//	else
+//	{
+//		dataSeriesTime = "";
+//		MITK_WARN << " No series time ";
+//	}
+//
+//
+//	//--- PatientSex
+//	if (dataPatientSex.c_str() != NULL && *(dataPatientSex.c_str()) != '\0')
+//	{
+//		if (dataPatientSex != "M" && dataPatientSex != "F")
+//		{
+//			dataPatientSex = "";
+//			MITK_WARN << " patient sex is not F or M";
+//
+//		}
+//	}
+//	else
+//	{
+//		dataPatientSex = "";
+//		MITK_WARN << " No patient sex";
+//
+//	}
+//
+//	double dose;
+//	if (injectedDose.c_str() != NULL && *(injectedDose.c_str()) != '\0')
+//	{
+//		dose = QString::fromStdString(injectedDose).toDouble();
+//		MITK_INFO << "dataVolumeUnits.c_str() " << dataVolumeUnits.c_str();
+//		MITK_INFO << "-----------------1" << dose;
+//		dose = ConvertRadioactivityUnits(dose, dataVolumeUnits.c_str(), "kBq");  // kBq/mL
+//		MITK_INFO << "-----------------" << dose;
+//	}
+//	else
+//	{
+//		dose = 0;
+//		MITK_WARN << "NO inject dose,default is 0";
+//	}
+//	MITK_INFO << "Inject dose： " << dose;
+//
+//
+//	double weight2;
+//	if (dataWeight.c_str() != NULL && *(dataWeight.c_str()) != '\0') {
+//		weight2 = QString::fromStdString(dataWeight).toDouble();
+//		weight2 = ConvertWeightUnits(weight2, list.weightUnits.c_str(), "kg");
+//
+//		MITK_INFO << "weight units default is kg";
+//	}
+//	else
+//	{
+//		weight2 = 0.0;
+//		MITK_WARN << "NO patient weight,default is 0 kg";
+//	}
+//	MITK_INFO << "weight： " << weight2;
+//
+//
+//
+//	double height2;
+//	if (dataHeight.c_str() != NULL && *(dataHeight.c_str()) != '\0') {
+//		height2 = QString::fromStdString(dataHeight).toDouble();
+//		height2 = height2 * 100;//trans to cm
+//		MITK_INFO << "height units default is cm";
+//	}
+//	else
+//	{
+//		height2 = 0.0;
+//		MITK_WARN << "NO patient height,default is 0 cm";
+//	}
+//	MITK_INFO << "height： " << height2;
+//
+//
+//	if (dataRadionuclideHalfLife.c_str() == NULL || *(dataRadionuclideHalfLife.c_str()) == '\0') {
+//
+//		dataRadionuclideHalfLife = "";
+//		MITK_INFO << "NO RadionuclideHalfLife, default is 0";
+//	}
+//	MITK_INFO << "RadionuclideHalfLife： " << dataRadionuclideHalfLife;
+//
+//
+//	if (dataDecayCorrection.c_str() == NULL || *(dataDecayCorrection.c_str()) == '\0') {
+//
+//		dataDecayCorrection = "";
+//		MITK_INFO << "NO dataDecayCorrection, default is empty";
+//	}
+//	MITK_INFO << "dataDecayCorrection： " << dataDecayCorrection;
+//
+//
+//	m_Controls.lineEditWeight->setText(QString::number(weight2));
+//	m_Controls.lineEditHeight->setText(QString::number(height2));
+//	m_Controls.lineEditInjectDose->setText(QString::number(dose));
+//	m_Controls.lineEditInjectTime->setText(QString::fromStdString(dataInjectionTime));
+//	m_Controls.lineEditSeriesTime->setText(QString::fromStdString(dataSeriesTime));
+//	m_Controls.lineEditSex->setText(QString::fromStdString(dataPatientSex));
+//	m_Controls.lineEditHalf->setText(QString::fromStdString(dataRadionuclideHalfLife));
+//	m_Controls.lineEditDecayCorrection->setText(QString::fromStdString(dataDecayCorrection));
+//
+//	return true;
+//}
+
+
+
+
+
 void USToolKitView::USQuantitation()
 {
 	mitk::DataStorage::SetOfObjects::ConstPointer _NodeSet = this->GetDataStorage()->GetAll();
@@ -718,20 +1102,27 @@ void USToolKitView::USQuantitation()
 		greyImage->SetDirection(itkInImage->GetDirection());
 		greyImage->Allocate();
 
-		charImageType::Pointer EPImage = charImageType::New();
-		EPImage->SetRegions(newRegion);
-		EPImage->SetSpacing(newSpacing);
-		EPImage->SetOrigin(itkInImage->GetOrigin());
-		EPImage->SetDirection(itkInImage->GetDirection());
-		EPImage->Allocate();
-
 		int x = mitkInImage->GetDimensions()[0];
 		int y = mitkInImage->GetDimensions()[1];
 		int z = mitkInImage->GetDimensions()[2];
 		int Vmax = 32767;
 		int DR = 60;
 
-		//convert RGB to gray
+		std::vector<std::vector<std::vector<int>>> EPdata(x);
+
+		for (int n = 0; n < x; n++){
+			EPdata[n].resize(y);
+		}
+
+		for (int i = 0; i < x; i++){
+			for (int j = 0; j < y; j++) {
+			
+				EPdata[i][j].resize(z);
+			}
+		}
+
+
+		//convert RGB to gray and calculate the EPdata
 		ItkRgbImageType::IndexType pixelIndex;
 		for (int i = 0; i < x; i++) {
 			for (int j = 0; j < y; j++) {
@@ -743,37 +1134,14 @@ void USToolKitView::USQuantitation()
 					PixelType onePixel = itkInImage->GetPixel(pixelIndex);
 					int greyPixel = (onePixel.GetRed() * 30 + onePixel.GetGreen() * 59 + onePixel.GetBlue() * 11 + 50) / 100;
 					greyImage->SetPixel(pixelIndex, greyPixel);
-					EPImage->SetPixel(pixelIndex, pow(Vmax, 2) * pow(10, ((greyPixel / 255 - 1) * DR) / 10));
+					EPdata[i][j][k] = pow(Vmax, 2) * pow(10, ((greyPixel / 255 - 1) * DR) / 10);
 				}
 			}
 		}
 
-		mitk::Image::Pointer EPMitkImage = mitk::Image::New();
 		mitk::Image::Pointer greyMitkImage = mitk::Image::New();
-
-		mitk::CastToMitkImage(EPImage, EPMitkImage);
 		mitk::CastToMitkImage(greyImage, greyMitkImage);
-
-		itk::Index<3> EPidx = { {100,100,100} };
-
-		MITK_INFO << EPMitkImage->GetScalarValue2ndMax();
-		MITK_INFO << EPMitkImage->GetScalarValueMax();
-		MITK_INFO << EPMitkImage->GetScalarValue2ndMaxNoRecompute();
-		MITK_INFO << EPMitkImage->GetPixelValueByIndex(EPidx);
-		MITK_INFO << mitkInImage->GetPropertyList();
-
-		mitk::TimeGeometry* geometry = mitkInImage->GetTimeGeometry();
-		//timepoint
-		std::vector<double> tempGrid;
-		if (geometry)
-		{
-			for (int i = 0; i < mitkInImage->GetTimeSteps(); i++)
-			{
-				tempGrid.push_back(geometry->TimeStepToTimePoint(i) / 1000.0);//units: s
-				MITK_INFO << "the " << i << "th timepoint is: " << (geometry->TimeStepToTimePoint(i) / 1000.0);
-			}
-		}
-
+		MITK_INFO << EPdata[100][100][100];
 
 	}
 }
@@ -804,7 +1172,7 @@ void USToolKitView::USExtractChannel()
 		std::string nodeName = node->GetName();
 		MITK_INFO << "name: " << nodeName;
 
-		//mitk RGBתITK RGBͼ��
+		//mitk RGB×ªITK RGBÍ¼Ïñ
 		typedef itk::RGBPixel<unsigned char> PixelType;
 		typedef itk::Image< PixelType, 3 > ItkRgbImageType;
 		typedef mitk::ImageToItk< ItkRgbImageType > CasterType;
@@ -858,7 +1226,7 @@ void USToolKitView::USExtractChannel()
 		int y = mitkInImage->GetDimensions()[1];
 		int z = mitkInImage->GetDimensions()[2];
 
-		//�ֱ���ȡRGB���Լ��ϳɻҶ�ͼ��
+		//·Ö±ðÌáÈ¡RGB£¬ÒÔ¼°ºÏ³É»Ò¶ÈÍ¼Ïñ
 		ItkRgbImageType::IndexType pixelIndex;
 		for (int i = 0; i < x; i++) {
 			for (int j = 0; j < y; j++) {

@@ -115,6 +115,7 @@ private:
 	void GlobalReinit(bool);
 	void ShowOnlySelectedNodes(const mitk::DataNode* selectedNode);
 	void ReadImageFromFolder(const QString & path);
+	bool ShowSUVInfo(std::string USDicomPath);
 
 };
 #endif 
