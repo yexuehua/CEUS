@@ -100,6 +100,7 @@ protected slots:
 	void USQuantitation();
 	//void USPreprocessDataSelection(int index);
 	void USReferenceDataSelection(int index);
+	void USLesionDataSelection(int index);
 	void USRGBConvertGray();
 	//void USExtractChannel();
 
@@ -116,7 +117,7 @@ private:
 	void GlobalReinit(bool);
 	void ShowOnlySelectedNodes(const mitk::DataNode* selectedNode);
 	void ReadImageFromFolder(const QString & path);
-	bool ShowSUVInfo(std::string USDicomPath);
+	//bool ShowSUVInfo(std::string USDicomPath);
 
 };
 #endif 
