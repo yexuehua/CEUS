@@ -285,11 +285,11 @@ void USToolKitView::CreateQtPartControl(QWidget *parent)
 
 
 	//preprocessing
-	//m_Controls.USPreprocessDataSelectionComBox->setInsertPolicy(QComboBox::InsertAlphabetically);
-	//m_Controls.USPreprocessDataSelectionComBox->SetDataStorage(this->GetDataStorage());
-	//m_Controls.USPreprocessDataSelectionComBox->SetPredicate(m_IsOfTypeImagePredicate);
-	//m_Controls.USPreprocessDataSelectionComBox->SetAutoSelectNewItems(false);
-	//connect(m_Controls.USPreprocessDataSelectionComBox, SIGNAL(activated(int)), this, SLOT(USPreprocessDataSelection(int)));
+	m_Controls.USReferenceSelectorCombox_3->setInsertPolicy(QComboBox::InsertAlphabetically);
+	m_Controls.USReferenceSelectorCombox_3->SetDataStorage(this->GetDataStorage());
+	m_Controls.USReferenceSelectorCombox_3->SetPredicate(m_IsOfTypeImagePredicate);
+	m_Controls.USReferenceSelectorCombox_3->SetAutoSelectNewItems(false);
+	connect(m_Controls.USReferenceSelectorCombox_3, SIGNAL(activated(int)), this, SLOT(USReferenceDataSelection(int)));
 	connect(m_Controls.USQuantitationButton, SIGNAL(clicked()), this, SLOT(USQuantitation()));
 	//connect(m_Controls.USRGBConvertGrayButton, SIGNAL(clicked()), this, SLOT(USExtractChannel()));
 	//connect(m_Controls.DCEUSDynamicCheckbox,)
@@ -675,10 +675,10 @@ void USToolKitView::GlobalReinit(bool)
 
 }
 
-/*
-void USToolKitView::USPreprocessDataSelection(int index) {
 
-	mitk::DataNode* node = m_Controls.USPreprocessDataSelectionComBox->GetSelectedNode();
+void USToolKitView::USReferenceDataSelection(int index) {
+
+	mitk::DataNode* node = m_Controls.USReferenceSelectorCombox_3->GetSelectedNode();
 	cout << "nodename: " << node->GetName() << endl;
 
 	if (!node) return;
@@ -688,7 +688,7 @@ void USToolKitView::USPreprocessDataSelection(int index) {
 	this->GlobalReinit(true);
 	mitk::RenderingManager::GetInstance()->RequestUpdateAll();
 }
-*/
+
 
 
 //bool USToolKitView::ShowSUVInfo(std::string USDicomPath)
