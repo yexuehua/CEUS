@@ -118,6 +118,7 @@ private:
 	void ShowOnlySelectedNodes(const mitk::DataNode* selectedNode);
 	void ReadImageFromFolder(const QString & path);
 	//bool ShowSUVInfo(std::string USDicomPath);
+	void USCurveTIC(std::vector<double> tempGrid, std::vector<double> statisticsMean);
 
 };
 #endif 
