@@ -261,6 +261,7 @@
 
 
 #include <io.h>
+#include <mpfit.h>
 
 
 const std::string USToolKitView::VIEW_ID = "org.mitk.views.USToolKit";
@@ -1091,31 +1092,33 @@ void USToolKitView::USQuantitation()
 	mitk::DataNode* lesionNode = m_Controls.USLesionSelectorCombox_2->GetSelectedNode();
 	//get original image node
 	mitk::DataNode* datanode = m_Controls.USLoadSelectorCombox->GetSelectedNode();
-
-	if ((!referNode) || (!lesionNode) || (!datanode)) return;
-
-	mitk::Image::Pointer referRoiMitkImage = dynamic_cast<mitk::Image*>(referNode->GetData());
-	mitk::Image::Pointer lesionRoiMitkImage = dynamic_cast<mitk::Image*>(lesionNode->GetData());
-	mitk::Image::Pointer mitkInImage = dynamic_cast<mitk::Image*>(datanode->GetData());
-
-	typedef itk::Image<double, 3> charImageType;
-
+	
 	std::string nodeName = datanode->GetName();
 	MITK_INFO << nodeName;
 
+	if ((!referNode) || (!lesionNode) || (!datanode)) return;
+
+	//get the mitk data
+	mitk::Image::Pointer referRoiMitkImage = dynamic_cast<mitk::Image*>(referNode->GetData());
+	mitk::Image::Pointer lesionRoiMitkImage = dynamic_cast<mitk::Image*>(lesionNode->GetData());
+	mitk::Image::Pointer mitkInImage = dynamic_cast<mitk::Image*>(datanode->GetData());
+	//convert to itk data
+	typedef itk::Image<double, 3> charImageType;
 	typedef itk::RGBPixel<unsigned char> PixelType;
 	typedef itk::Image< PixelType, 3 > ItkRgbImageType;
 	typedef mitk::ImageToItk< ItkRgbImageType > CasterType;
+	//original itk data
 	CasterType::Pointer caster = CasterType::New();
 	caster->SetInput(mitkInImage);
 	caster->Update();
 	ItkRgbImageType::Pointer itkInImage = caster->GetOutput();
-
+	//itk ROI data
 	charImageType::Pointer referRoiItkImage = charImageType::New();
 	mitk::CastToItkImage(referRoiMitkImage, referRoiItkImage);
 	charImageType::Pointer lesionRoiItkImage = charImageType::New();
 	mitk::CastToItkImage(lesionRoiMitkImage, lesionRoiItkImage);
 
+	//define some generated itk data
 	charImageType::RegionType newRegion;
 	charImageType::SizeType newSize = itkInImage->GetLargestPossibleRegion().GetSize();
 	newRegion.SetSize(itkInImage->GetLargestPossibleRegion().GetSize());
@@ -1154,6 +1157,7 @@ void USToolKitView::USQuantitation()
 	EPLesionItkImage->SetDirection(itkInImage->GetDirection());
 	EPLesionItkImage->Allocate();
 
+	//get the dimensions of origianal image and set some parameter
 	int x = mitkInImage->GetDimensions()[0];
 	int y = mitkInImage->GetDimensions()[1];
 	int z = mitkInImage->GetDimensions()[2];
@@ -1161,7 +1165,6 @@ void USToolKitView::USQuantitation()
 	int DR = 60;
 	int RoiSlice;
 
-	MITK_INFO << "convert before";
 	//convert RGB to gray and calculate the EPdata
 	ItkRgbImageType::IndexType pixelIndex;
 	charImageType::IndexType RoiPixelIndex;
@@ -1179,6 +1182,7 @@ void USToolKitView::USQuantitation()
 				
 				PixelType onePixel = itkInImage->GetPixel(pixelIndex);
 				RoiPixelType lesionRoiPixel = lesionRoiItkImage->GetPixel(RoiPixelIndex);
+				//get the ROI slice position
 				if (lesionRoiPixel> 0) RoiSlice = k;
 				double greyPixel = (onePixel.GetRed() * 30 + onePixel.GetGreen() * 59 + onePixel.GetBlue() * 11 + 50) / 100.0;
 				greyImage->SetPixel(pixelIndex, greyPixel);
@@ -1186,10 +1190,9 @@ void USToolKitView::USQuantitation()
 			}
 		}
 	}
-	MITK_INFO << "extract ROI";
+
 	//extract ROI
 	charImageType::IndexType EPPixelIndex;
-	
 	for (int i = 0; i < x; i++) {
 		for (int j = 0; j < y; j++) {
 			for (int k = 0; k < z; k++) {
@@ -1207,8 +1210,20 @@ void USToolKitView::USQuantitation()
 			}
 		}
 	}
+	
+	//using iterator to extract ROI
+	//typedef itk::ImageRegionConstIterator< charImageType > ConstIteratorType;
+	//typedef itk::ImageRegionIterator< charImageType > IteratorType;
+	//ConstIteratorType in1(EPItkImage, EPItkImage->GetRequestedRegion());
+	//ConstIteratorType in2(lesionRoiItkImage, lesionRoiItkImage->GetRequestedRegion());
+	//IteratorType out(EPLesionItkImage, EPItkImage->GetRequestedRegion());
 
-	//计算平均值
+	//for (in1.GoToBegin(), in2.GoToBegin(), out.GoToBegin(); !in1.IsAtEnd(); ++in1, ++in2, ++out)
+	//{
+	//	out.Set(in1.Get() * in2.Get());
+	//}
+
+	//calculate the average EP
 	std::vector<double> EPAverageValue;
 	double RoiPixelCount=0;
 	double sumOfSlice=0;
@@ -1232,10 +1247,7 @@ void USToolKitView::USQuantitation()
 		sumOfSlice = 0;
 		RoiPixelCount = 0;
 	}
-	for (std::vector<double>::iterator it = EPAverageValue.begin(); it != EPAverageValue.end(); ++it)
-	{
-		MITK_INFO << *it;
-	}
+
 	// processing the time points
 	QString Qtimepoints = m_Controls.USLoadTableWidget->item(0, 2)->text();
 	std::string timepoints = Qtimepoints.toStdString();
@@ -1261,9 +1273,14 @@ void USToolKitView::USQuantitation()
 		}
 		tempGrid[i] = tempGrid[i-1] + tempGrid[i];
 	}
-	
+
+	//plot the curve
 	USCurveTIC(tempGrid, EPAverageValue);
-	MITK_INFO << EPAverageValue.size();
+
+	//fit the curve
+
+
+	// display the generated image
 	mitk::Image::Pointer greyMitkImage = mitk::Image::New();
 	mitk::Image::Pointer EPMitkImage = mitk::Image::New();
 	mitk::CastToMitkImage(greyImage, greyMitkImage);
@@ -1276,7 +1293,6 @@ void USToolKitView::USQuantitation()
 	EPNode->SetName(nodeName + "_EPLesion");
 	this->GetDataStorage()->Add(EPNode, datanode);
 
-	// display the gray and EP image
 	//mitk::DataNode::Pointer greyNode = mitk::DataNode::New();
 	//greyNode->SetData(greyMitkImage);
 	//greyNode->SetName(nodeName + "_grey");
@@ -1288,6 +1304,235 @@ void USToolKitView::USQuantitation()
 	//this->GetDataStorage()->Add(EPNode, node);
 
 	MITK_INFO << "Quantitation done";
+}
+
+
+int USToolKitView::gammaVariateFit(int m, int n, double *p, double *dy, double **dvec, void *vars)
+{
+	struct vars_struct *v = (struct vars_struct *) vars;
+	double *x, *y;
+
+	x = v->x;
+	y = v->y;
+
+	//defined as in DCEMRIS4
+	//A:    max flow concentration
+	//ka:    inflow factor of bolus tracer
+	//at:    arrival time of bolus influx
+	//ta:    time of half tracers into the capilary bed
+	//kb outflow factor
+	//tb:    time-course of bolus passing through the capilary
+	//MTT = tb - at
+	double k = p[0], alpha = p[1], beta = p[2];//,t0 = p[1];
+	double deltaT = x[2] - x[1];
+	double maxY1 = 0;
+	int Yargmax1;
+
+
+
+	for (int i = 0; i < m; i++)
+	{
+		if (y[i] > maxY1)
+		{
+			maxY1 = y[i];
+			Yargmax1 = i;
+		}
+	}
+
+
+
+	double  prevalue1 = 0;
+	int Preargmax1 = 0;
+	for (int i = 0; i < m / 2; i++)
+	{
+		if (y[i] < (maxY1*0.1))
+		{
+			prevalue1 = y[i];
+			Preargmax1 = i;
+		}
+	}
+
+
+
+	memset(dy, 0, sizeof(double)*m);
+	for (int t = 0; t < m; t++)
+	{
+		double dT = x[t] - x[Preargmax1];
+		if (dT > 0)
+		{
+			dy[t] = k * (pow(dT, alpha))*(exp(-dT / beta));
+		}
+		else
+			dy[t] = 0;
+	}
+
+
+
+	return 0;
+}
+
+
+
+int USToolKitView::gammaVariate(int m, int n, double *p, double *dy, double **dvec, void *vars)
+{
+	struct vars_struct *v = (struct vars_struct *) vars;
+	double *x, *y;
+
+
+
+	x = v->x;
+	y = v->y;
+
+
+
+	//defined as in DCEMRIS4
+	//A: max flow concentration
+	//ka: inflow factor of bolus tracer
+	//at: arrivaal time of bolus influx
+	//ta: time of half tracers into the capilary bed
+	//kb outflow factor
+	//tb: time-course of bolus passing through the capilary
+	//MTT = tb - at
+	double k = p[0], alpha = p[1], beta = p[2];//, t0 = p[1];
+
+
+
+	double deltaT = x[2] - x[1];
+
+
+
+	double maxY1 = 0;
+	int Yargmax1;
+	for (int i = 0; i < m; i++)
+	{
+		if (y[i] > maxY1)
+		{
+			maxY1 = y[i];
+			Yargmax1 = i;
+		}
+	}
+
+
+
+	double  prevalue1 = 0;
+	int Preargmax1 = 0;
+	for (int i = 0; i < m / 2; i++)
+	{
+		if (y[i] < (maxY1*0.1))
+		{
+			prevalue1 = y[i];
+			Preargmax1 = i;
+		}
+	}
+
+
+
+	memset(dy, 0, sizeof(double)*m);
+	for (int t = 0; t < m; t++)
+	{
+		//double dT = t*deltaT-t0;
+		double dT = x[t] - x[Preargmax1];
+		if (dT > 0)
+		{
+			dy[t] = y[t] - k * (pow(dT, alpha))*(exp(-dT / beta));
+		}
+		else
+			dy[t] = 0;
+	}
+	return 0;
+}
+
+
+void USToolkitView：：USModelFit(int timeSteps)
+{
+	double concMax = 0;
+	MITK_INFO << "======== concMax ：";
+	for (int i = 0; i < timeSteps; i++)
+	{
+		if (concMax < y[i])
+		{
+			concMax = y[i];
+		}
+		cout << concMax << "   ";
+	}
+
+
+
+	const int NumParams = 3;            //2 for Patlak, leave the other 3 there for future possible models
+	mp_par pars[NumParams];                /* Parameter constraints */
+	memset(pars, 0, sizeof(pars));        /* Initialize constraint structure */
+
+	//use gamma variate fit to find BAT, TTP and AUC90, 180
+	pars[0].limited[0] = 1;
+	pars[0].limits[0] = 0;
+	pars[0].limited[1] = 1;
+	pars[0].limits[1] = concMax * 2;
+
+
+
+	//alpha constraint
+	pars[1].limited[0] = 1;
+	pars[1].limits[0] = 0;
+	pars[1].limited[1] = 1;
+	pars[1].limits[1] = 3;
+
+
+
+	//beta constraint
+	pars[2].limited[0] = 1;
+	pars[2].limits[0] = 0;
+	pars[2].limited[1] = 1;
+	pars[2].limits[1] = 50;
+
+
+
+	double p[] = { 1, 1, 1 };
+	struct vars_struct v;
+
+
+
+	mp_result result;
+	memset(&result, 0, sizeof(result));
+	MITK_INFO << "======== time2 ：";
+	for (int i = 0; i < timeSteps; i++)
+	{
+		time2[i] = t[i] / t[timeSteps - 1] * timeSteps;
+		cout << time2[i] << "   ";
+	}
+
+
+
+	v.x = time2;
+	v.y = y;
+
+
+
+	mpfit(gammaVariate, timeSteps, 3, p, pars, 0, (void *)&v, &result);
+	MITK_INFO << "A: " << p[0] << " , alpha: " << p[1] << " , beta: " << p[2];
+
+
+
+	gammaVariateFit(timeSteps, 3, p, fit, 0, (void *)&v);
+	MITK_INFO << "Finish Gamma Fit";
+
+
+
+	for (int i = 0; i < timeSteps; i++)
+	{
+		m_fittingResult.fittingAIF.push_back(fit[i]);
+	}
+
+	// 曲线
+	bool plotSuccessed = this->StartPlotAIF(t, y, y1, fit, "AIF Plotting", QPen(Qt::green), QPen(Qt::blue), QPen(Qt::red),
+		"Time(s)", "Intensity(HU)",
+		timeSteps, NULL);
+
+
+
+	delete[] y;
+	delete[] y1;
+	delete[] t;
+	delete[] fit;
 }
 
 

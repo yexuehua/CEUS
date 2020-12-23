@@ -70,7 +70,7 @@
 
 #include "QmitkStepperAdapter.h"
 #include <mitkDataStorageSelection.h>
-
+#include <mpfit.h>
 
 class USToolKitView : public QmitkAbstractView 
 {
@@ -119,6 +119,9 @@ private:
 	void ReadImageFromFolder(const QString & path);
 	//bool ShowSUVInfo(std::string USDicomPath);
 	void USCurveTIC(std::vector<double> tempGrid, std::vector<double> statisticsMean);
+	void USModelFit(int timeSteps);
+	int gammaVariateFit(int m, int n, double *p, double *dy, double **dvec, void *vars);
+	int gammaVariate(int m, int n, double *p, double *dy, double **dvec, void *vars);
 
 };
 #endif 
