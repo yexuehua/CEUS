@@ -266,6 +266,18 @@
 
 const std::string USToolKitView::VIEW_ID = "org.mitk.views.USToolKit";
 
+// GammaFitting
+struct vars_struct
+{
+	double    *x;                //phase number
+	float    *t;                //phase time
+	double    *y;                //concentration value
+	double    at;                //initial bolus arrival time
+	double    *ey;            //weight for each point
+	double    *originalAif;
+	double    delay;            //time delay
+	int        lastTime;        //last time
+};
 
 void USToolKitView::SetFocus()
 {
@@ -1278,7 +1290,8 @@ void USToolKitView::USQuantitation()
 	USCurveTIC(tempGrid, EPAverageValue);
 
 	//fit the curve
-
+	if ((!tempGrid.empty()) && (!EPAverageValue.empty()))
+		USModelFit(tempGrid.size(), &tempGrid[0], &EPAverageValue[0]);
 
 	// display the generated image
 	mitk::Image::Pointer greyMitkImage = mitk::Image::New();
@@ -1307,7 +1320,7 @@ void USToolKitView::USQuantitation()
 }
 
 
-int USToolKitView::gammaVariateFit(int m, int n, double *p, double *dy, double **dvec, void *vars)
+int gammaVariateFit(int m, int n, double *p, double *dy, double **dvec, void *vars)
 {
 	struct vars_struct *v = (struct vars_struct *) vars;
 	double *x, *y;
@@ -1371,9 +1384,7 @@ int USToolKitView::gammaVariateFit(int m, int n, double *p, double *dy, double *
 	return 0;
 }
 
-
-
-int USToolKitView::gammaVariate(int m, int n, double *p, double *dy, double **dvec, void *vars)
+int gammaVariate(int m, int n, double *p, double *dy, double **dvec, void *vars)
 {
 	struct vars_struct *v = (struct vars_struct *) vars;
 	double *x, *y;
@@ -1442,22 +1453,25 @@ int USToolKitView::gammaVariate(int m, int n, double *p, double *dy, double **dv
 	return 0;
 }
 
-
-void USToolkitView：：USModelFit(int timeSteps)
+void USToolKitView::USModelFit(int timeSteps, double *t, double *EP)
 {
+	// y[] : original column
 	double concMax = 0;
 	MITK_INFO << "======== concMax ：";
 	for (int i = 0; i < timeSteps; i++)
 	{
-		if (concMax < y[i])
+		if (concMax < EP[i])
 		{
-			concMax = y[i];
+			concMax = EP[i];
 		}
-		cout << concMax << "   ";
 	}
-
-
-
+	
+	//double *t1 = new double[timeSteps];
+	double *fit = new double[timeSteps];
+	double *time2 = new double[timeSteps];
+	//double *y1 = new double[timeSteps];
+	   
+	// related to gamma 
 	const int NumParams = 3;            //2 for Patlak, leave the other 3 there for future possible models
 	mp_par pars[NumParams];                /* Parameter constraints */
 	memset(pars, 0, sizeof(pars));        /* Initialize constraint structure */
@@ -1467,44 +1481,35 @@ void USToolkitView：：USModelFit(int timeSteps)
 	pars[0].limits[0] = 0;
 	pars[0].limited[1] = 1;
 	pars[0].limits[1] = concMax * 2;
-
-
-
+	   
 	//alpha constraint
 	pars[1].limited[0] = 1;
 	pars[1].limits[0] = 0;
 	pars[1].limited[1] = 1;
 	pars[1].limits[1] = 3;
-
-
-
+	   
 	//beta constraint
 	pars[2].limited[0] = 1;
 	pars[2].limits[0] = 0;
 	pars[2].limited[1] = 1;
 	pars[2].limits[1] = 50;
-
-
-
+	   
 	double p[] = { 1, 1, 1 };
+
 	struct vars_struct v;
-
-
 
 	mp_result result;
 	memset(&result, 0, sizeof(result));
-	MITK_INFO << "======== time2 ：";
+	
+	// adapt time interval 
 	for (int i = 0; i < timeSteps; i++)
 	{
 		time2[i] = t[i] / t[timeSteps - 1] * timeSteps;
 		cout << time2[i] << "   ";
 	}
 
-
-
 	v.x = time2;
-	v.y = y;
-
+	v.y = EP;
 
 
 	mpfit(gammaVariate, timeSteps, 3, p, pars, 0, (void *)&v, &result);
@@ -1516,23 +1521,10 @@ void USToolkitView：：USModelFit(int timeSteps)
 	MITK_INFO << "Finish Gamma Fit";
 
 
-
-	for (int i = 0; i < timeSteps; i++)
-	{
-		m_fittingResult.fittingAIF.push_back(fit[i]);
-	}
-
-	// 曲线
-	bool plotSuccessed = this->StartPlotAIF(t, y, y1, fit, "AIF Plotting", QPen(Qt::green), QPen(Qt::blue), QPen(Qt::red),
-		"Time(s)", "Intensity(HU)",
-		timeSteps, NULL);
-
-
-
-	delete[] y;
-	delete[] y1;
-	delete[] t;
-	delete[] fit;
+	//// 曲线
+	//bool plotSuccessed = this->StartPlotAIF(t, y, y1, fit, "AIF Plotting", QPen(Qt::green), QPen(Qt::blue), QPen(Qt::red),
+	//	"Time(s)", "Intensity(HU)",
+	//	timeSteps, NULL);	
 }
 
 

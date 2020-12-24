@@ -23,6 +23,7 @@ set(MOC_H_FILES
   src/internal/DealRegistry.h
   src/internal/CalculateDays.h
   src/internal/SoftNameStringAndRegistryString.h
+  src/internal/mpfit.h
 
 )
 
