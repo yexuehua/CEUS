@@ -1287,12 +1287,12 @@ void USToolKitView::USQuantitation()
 	}
 
 	//plot the curve
-	USCurveTIC(tempGrid, EPAverageValue);
-
+	std::vector<double> fit(tempGrid.size());
 	//fit the curve
 	if ((!tempGrid.empty()) && (!EPAverageValue.empty()))
-		USModelFit(tempGrid.size(), &tempGrid[0], &EPAverageValue[0]);
+		USModelFit(tempGrid.size(), &tempGrid[0], &EPAverageValue[0], &fit[0]);
 
+	USCurveTIC(tempGrid, EPAverageValue, fit);
 	// display the generated image
 	mitk::Image::Pointer greyMitkImage = mitk::Image::New();
 	mitk::Image::Pointer EPMitkImage = mitk::Image::New();
@@ -1453,7 +1453,7 @@ int gammaVariate(int m, int n, double *p, double *dy, double **dvec, void *vars)
 	return 0;
 }
 
-void USToolKitView::USModelFit(int timeSteps, double *t, double *EP)
+void USToolKitView::USModelFit(int timeSteps, double *t, double *EP, double *fit)
 {
 	// y[] : original column
 	double concMax = 0;
@@ -1467,7 +1467,7 @@ void USToolKitView::USModelFit(int timeSteps, double *t, double *EP)
 	}
 	
 	//double *t1 = new double[timeSteps];
-	double *fit = new double[timeSteps];
+	//double *fit = new double[timeSteps];
 	double *time2 = new double[timeSteps];
 	//double *y1 = new double[timeSteps];
 	   
@@ -1505,7 +1505,6 @@ void USToolKitView::USModelFit(int timeSteps, double *t, double *EP)
 	for (int i = 0; i < timeSteps; i++)
 	{
 		time2[i] = t[i] / t[timeSteps - 1] * timeSteps;
-		cout << time2[i] << "   ";
 	}
 
 	v.x = time2;
@@ -1518,6 +1517,8 @@ void USToolKitView::USModelFit(int timeSteps, double *t, double *EP)
 
 
 	gammaVariateFit(timeSteps, 3, p, fit, 0, (void *)&v);
+
+
 	MITK_INFO << "Finish Gamma Fit";
 
 
@@ -1528,7 +1529,7 @@ void USToolKitView::USModelFit(int timeSteps, double *t, double *EP)
 }
 
 
-void USToolKitView::USCurveTIC(std::vector<double> tempGrid, std::vector<double> statisticsMean)
+void USToolKitView::USCurveTIC(std::vector<double> tempGrid, std::vector<double> statisticsMean, std::vector<double> fit)
 {
 	m_Controls.widgetPlot->Clear();
 
@@ -1541,13 +1542,21 @@ void USToolKitView::USCurveTIC(std::vector<double> tempGrid, std::vector<double>
 	m_Controls.widgetPlot->SetPlotTitle(plotTitle.c_str());
 
 	unsigned int curveId = this->m_Controls.widgetPlot->InsertCurve("TIC");
+	unsigned int curveFitId = this->m_Controls.widgetPlot->InsertCurve("Fit");
 
-	QPen pen(Qt::SolidLine);
-	pen.setWidth(2);
-	pen.setColor(Qt::red);
+	QPen pen(Qt::DashLine);
+	pen.setWidth(1);
+	pen.setColor(Qt::green);
+	QPen penfit(Qt::SolidLine);
+	penfit.setWidth(1);
+	penfit.setColor(Qt::red);
+
 	m_Controls.widgetPlot->SetCurveData(curveId, tempGrid, statisticsMean);
 	m_Controls.widgetPlot->SetCurvePen(curveId, pen);
 	m_Controls.widgetPlot->SetCurveStyle(curveId, QwtPlotCurve::Lines);
+	m_Controls.widgetPlot->SetCurveData(curveFitId, tempGrid, fit);
+	m_Controls.widgetPlot->SetCurvePen(curveFitId, penfit);
+	m_Controls.widgetPlot->SetCurveStyle(curveFitId, QwtPlotCurve::Lines);
 	m_Controls.widgetPlot->Replot();
 
 

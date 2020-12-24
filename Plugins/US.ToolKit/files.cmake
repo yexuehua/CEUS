@@ -9,6 +9,7 @@ set(INTERNAL_CPP_FILES
   DealRegistry.cpp
   CalculateDays.cpp
   SoftNameStringAndRegistryString.cpp
+  mpfit.c
 
 )
 

@@ -118,8 +118,8 @@ private:
 	void ShowOnlySelectedNodes(const mitk::DataNode* selectedNode);
 	void ReadImageFromFolder(const QString & path);
 	//bool ShowSUVInfo(std::string USDicomPath);
-	void USCurveTIC(std::vector<double> tempGrid, std::vector<double> statisticsMean);
-	void USModelFit(int timeSteps, double *t, double *y);
+	void USCurveTIC(std::vector<double> tempGrid, std::vector<double> statisticsMean, std::vector<double> fit);
+	void USModelFit(int timeSteps, double *t, double *y, double *fit);
 	//int gammaVariateFit(int m, int n, double *p, double *dy, double **dvec, void *vars);
 	//int gammaVariate(int m, int n, double *p, double *dy, double **dvec, void *vars);
 
