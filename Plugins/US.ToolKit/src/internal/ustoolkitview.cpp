@@ -1508,12 +1508,12 @@ void USToolKitView::USQuantitation()
 	mitk::DataNode* referNode = m_Controls.USReferenceSelectorCombox->GetSelectedNode();
 	mitk::DataNode* lesionNode = m_Controls.USLesionSelectorCombox->GetSelectedNode();
 	//get original image node
-	mitk::DataNode* dataNode = m_Controls.USPreprocessDataSelectionComBox->GetSelectedNode();
+	mitk::DataNode* mainNode = m_Controls.USPreprocessDataSelectionComBox->GetSelectedNode();
 	
-	std::string nodeName = dataNode->GetName();
+	std::string nodeName = mainNode->GetName();
 	//MITK_INFO << nodeName;
 
-	if ((!referNode) || (!lesionNode) || (!dataNode)) return;
+	if ((!referNode) || (!lesionNode) || (!mainNode)) return;
 
 	//get the mitk ROI
 	mitk::Image::Pointer referRoiMitkImage = dynamic_cast<mitk::Image*>(referNode->GetData());
@@ -1645,7 +1645,7 @@ void USToolKitView::USQuantitation()
 		//std::vector<double> tempGrid;
 		//USGetTimeData(dataNode, &tempGrid[0]);
 		std::string timepoints;
-		dataNode->GetStringProperty("Timevector", timepoints);
+		mainNode->GetStringProperty("Timevector", timepoints);
 		timepoints.push_back('\\');
 		std::string tempstring;
 		std::vector<double> tempGrid;
