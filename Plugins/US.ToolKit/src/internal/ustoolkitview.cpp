@@ -266,28 +266,17 @@
 
 const std::string USToolKitView::VIEW_ID = "org.mitk.views.USToolKit";
 
-// GammaFitting
-struct vars_struct
-{
-	double    *x;                //phase number
-	float    *t;                //phase time
-	double    *y;                //concentration value
-	double    at;                //initial bolus arrival time
-	double    *ey;            //weight for each point
-	double    *originalAif;
-	double    delay;            //time delay
-	int        lastTime;        //last time
-};
 
 void USToolKitView::SetFocus()
 {
 
 }
 
+
 void USToolKitView::CreateQtPartControl(QWidget *parent)
 {
 	m_Controls.setupUi(parent);
-	connect(m_Controls.USLoadDynamicDicomButton, SIGNAL(clicked()), this, SLOT(LoadDicomUS()));
+	connect(m_Controls.USLoadDiocmButton, SIGNAL(clicked()), this, SLOT(LoadDicomUS()));
 
 	//combox predicate
 	mitk::NodePredicateProperty::Pointer m_IsBinaryPredicate = mitk::NodePredicateProperty::New("binary", mitk::BoolProperty::New(true));
@@ -295,59 +284,55 @@ void USToolKitView::CreateQtPartControl(QWidget *parent)
 	mitk::NodePredicateNot::Pointer m_IsNotBinaryPredicate = mitk::NodePredicateNot::New(m_IsBinaryPredicate);
 	mitk::NodePredicateAnd::Pointer m_IsOfTypeImagePredicate = mitk::NodePredicateAnd::New(m_IsNotBinaryPredicate, mitk::TNodePredicateDataType<mitk::Image>::New());
 
-
 	//get loaded data
-	m_Controls.USLoadSelectorCombox->setInsertPolicy(QComboBox::InsertAlphabetically);
-	m_Controls.USLoadSelectorCombox->SetDataStorage(this->GetDataStorage());
-	m_Controls.USLoadSelectorCombox->SetPredicate(m_IsOfTypeImagePredicate);
-	m_Controls.USLoadSelectorCombox->SetAutoSelectNewItems(false);
+	m_Controls.USPreprocessDataSelectionComBox->setInsertPolicy(QComboBox::InsertAlphabetically);
+	m_Controls.USPreprocessDataSelectionComBox->SetDataStorage(this->GetDataStorage());
+	m_Controls.USPreprocessDataSelectionComBox->SetPredicate(m_IsOfTypeImagePredicate);
+	m_Controls.USPreprocessDataSelectionComBox->SetAutoSelectNewItems(false);
 
 	//Get ROI：
 	//fererence
-	m_Controls.USReferenceSelectorCombox_3->setInsertPolicy(QComboBox::InsertAlphabetically);
-	m_Controls.USReferenceSelectorCombox_3->SetDataStorage(this->GetDataStorage());
-	m_Controls.USReferenceSelectorCombox_3->SetPredicate(m_IsOfTypeImagePredicate);
-	m_Controls.USReferenceSelectorCombox_3->SetAutoSelectNewItems(false);
+	m_Controls.USReferenceSelectorCombox->setInsertPolicy(QComboBox::InsertAlphabetically);
+	m_Controls.USReferenceSelectorCombox->SetDataStorage(this->GetDataStorage());
+	m_Controls.USReferenceSelectorCombox->SetPredicate(m_IsOfTypeImagePredicate);
+	m_Controls.USReferenceSelectorCombox->SetAutoSelectNewItems(false);
 	//lesion
-	m_Controls.USLesionSelectorCombox_2->setInsertPolicy(QComboBox::InsertAlphabetically);
-	m_Controls.USLesionSelectorCombox_2->SetDataStorage(this->GetDataStorage());
-	m_Controls.USLesionSelectorCombox_2->SetPredicate(m_IsOfTypeImagePredicate);
-	m_Controls.USLesionSelectorCombox_2->SetAutoSelectNewItems(false);
-
+	m_Controls.USLesionSelectorCombox->setInsertPolicy(QComboBox::InsertAlphabetically);
+	m_Controls.USLesionSelectorCombox->SetDataStorage(this->GetDataStorage());
+	m_Controls.USLesionSelectorCombox->SetPredicate(m_IsOfTypeImagePredicate);
+	m_Controls.USLesionSelectorCombox->SetAutoSelectNewItems(false);
 
 	//connect(m_Controls.USReferenceSelectorCombox_3, SIGNAL(activated(int)), this, SLOT(USReferenceDataSelection(int)));
 	//connect(m_Controls.USLesionSelectorCombox_2, SIGNAL(activated(int)), this, SLOT(USLesionDataSelection(int)));
+	connect(m_Controls.USSequenceEditSlider, SIGNAL(valueChanged(int)), this, SLOT(USSequenceEdit(int)));
+	connect(m_Controls.USRGBConvertGrayButton, SIGNAL(clicked()), this, SLOT(USRGBConvertGray()));
+	connect(m_Controls.USConvertEPButton, SIGNAL(clicked()), this, SLOT(USConvertToEchoPower()));
+	connect(m_Controls.USDenoiseStartButton, SIGNAL(clicked()), this, SLOT(USDenoiseStart()));
 	connect(m_Controls.USQuantitationButton, SIGNAL(clicked()), this, SLOT(USQuantitation()));
-	//connect(m_Controls.USRGBConvertGrayButton, SIGNAL(clicked()), this, SLOT(USExtractChannel()));
-	//connect(m_Controls.DCEUSDynamicCheckbox,)
 
 
 }
 
 
+USToolKitView::USToolKitView(QObject *)
+	: QmitkAbstractView()
+{
+
+}
 
 
 USToolKitView::~USToolKitView()
 {
 
-
 }
-
-USToolKitView::USToolKitView(QObject *)
-	: QmitkAbstractView()
-
-{
-
-}
-
 
 
 void USToolKitView::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*source*/,
 	const QList<mitk::DataNode::Pointer>& nodes)
 {
 
-
 }
+
 
 void USToolKitView::ReadImageFromFolder(const QString & path) {
 	QDir dir(path);
@@ -447,7 +432,6 @@ void USToolKitView::ReadImageFromFolder(const QString & path) {
 }
 
 
-
 template<typename TImageType>
 mitk::Image::Pointer USToolKitView::ReadRGBImageFileByITK(const std::string filename)
 {
@@ -523,16 +507,6 @@ void USToolKitView::LoadDicomUS() {
 		OFString FrameTimeVector;
 		data->findAndGetOFStringArray(DCM_FrameTimeVector, FrameTimeVector);
 		std::string dataFrameTimeVector = FrameTimeVector.c_str();
-		int RowCount = m_Controls.USLoadTableWidget->rowCount();
-		QString QdataFrameTimevector = QString::fromStdString(dataFrameTimeVector);
-		QString QgroupElement = "(0x0018, 0x1065)";
-		QString Qdiscription = "FrameTimeVector";
-		m_Controls.USLoadTableWidget->insertRow(RowCount);
-		m_Controls.USLoadTableWidget->setItem(RowCount, 0, new QTableWidgetItem(QgroupElement));
-		m_Controls.USLoadTableWidget->setItem(RowCount, 1, new QTableWidgetItem(Qdiscription));
-		m_Controls.USLoadTableWidget->setItem(RowCount, 2, new QTableWidgetItem(QdataFrameTimevector));
-
-
 		//ÏñËØÀàÐÍ
 		typedef itk::GDCMImageIO DcmIoType;
 		DcmIoType::Pointer io = DcmIoType::New();
@@ -588,10 +562,10 @@ void USToolKitView::LoadDicomUS() {
 			}
 			else if (io->GetPixelType() == itk::ImageIOBase::RGB)
 			{
-				//MITK_INFO << "ImageType is RGB";
+				MITK_INFO << "ImageType is RGB";
 				unsigned int dims = io->GetNumberOfDimensions();
 				//MITK_INFO << "ImageDims is " << dims;
-
+				MITK_INFO << io->GetComponentType();
 				switch (io->GetComponentType())
 				{
 				case DcmIoType::UCHAR:
@@ -639,6 +613,7 @@ void USToolKitView::LoadDicomUS() {
 
 			mitk::DataNode::Pointer node = mitk::DataNode::New();
 			node->SetData(image);
+			node->SetStringProperty("Timevector", dataFrameTimeVector.c_str());
 			node->SetName(multiUSDataName[i].toStdString());
 			node->SetLevelWindow(levelwindow);
 			this->GetDataStorage()->Add(node);
@@ -705,7 +680,7 @@ void USToolKitView::GlobalReinit(bool)
 
 void USToolKitView::USReferenceDataSelection(int index) {
 
-	mitk::DataNode* node = m_Controls.USReferenceSelectorCombox_3->GetSelectedNode();
+	mitk::DataNode* node = m_Controls.USReferenceSelectorCombox->GetSelectedNode();
 	cout << "nodename: " << node->GetName() << endl;
 
 	if (!node) return;
@@ -715,10 +690,11 @@ void USToolKitView::USReferenceDataSelection(int index) {
 	this->GlobalReinit(true);
 	mitk::RenderingManager::GetInstance()->RequestUpdateAll();
 }
+
 
 void USToolKitView::USLesionDataSelection(int index) {
 
-	mitk::DataNode* node = m_Controls.USLesionSelectorCombox_2->GetSelectedNode();
+	mitk::DataNode* node = m_Controls.USLesionSelectorCombox->GetSelectedNode();
 	cout << "nodename: " << node->GetName() << endl;
 
 	if (!node) return;
@@ -728,7 +704,6 @@ void USToolKitView::USLesionDataSelection(int index) {
 	this->GlobalReinit(true);
 	mitk::RenderingManager::GetInstance()->RequestUpdateAll();
 }
-
 
 
 //bool USToolKitView::ShowSUVInfo(std::string USDicomPath)
@@ -1097,38 +1072,31 @@ void USToolKitView::USLesionDataSelection(int index) {
 //}
 
 
-void USToolKitView::USQuantitation()
+void USToolKitView::USSequenceEdit(int index)
 {
-	//get ROI node
-	mitk::DataNode* referNode = m_Controls.USReferenceSelectorCombox_3->GetSelectedNode();
-	mitk::DataNode* lesionNode = m_Controls.USLesionSelectorCombox_2->GetSelectedNode();
-	//get original image node
-	mitk::DataNode* datanode = m_Controls.USLoadSelectorCombox->GetSelectedNode();
-	
-	std::string nodeName = datanode->GetName();
-	MITK_INFO << nodeName;
 
-	if ((!referNode) || (!lesionNode) || (!datanode)) return;
+}
 
-	//get the mitk data
-	mitk::Image::Pointer referRoiMitkImage = dynamic_cast<mitk::Image*>(referNode->GetData());
-	mitk::Image::Pointer lesionRoiMitkImage = dynamic_cast<mitk::Image*>(lesionNode->GetData());
-	mitk::Image::Pointer mitkInImage = dynamic_cast<mitk::Image*>(datanode->GetData());
-	//convert to itk data
-	typedef itk::Image<double, 3> charImageType;
+
+void USToolKitView::USRGBConvertGray()
+{
+	mitk::DataNode* node = m_Controls.USPreprocessDataSelectionComBox->GetSelectedNode();
+	if (!node)
+		return;
+
+	mitk::Image::Pointer mitkItkImage = dynamic_cast<mitk::Image*>(node->GetData());
+	if (!mitkItkImage)
+		return;
+
+	typedef itk::Image<unsigned char, 3> charImageType;
 	typedef itk::RGBPixel<unsigned char> PixelType;
 	typedef itk::Image< PixelType, 3 > ItkRgbImageType;
 	typedef mitk::ImageToItk< ItkRgbImageType > CasterType;
 	//original itk data
 	CasterType::Pointer caster = CasterType::New();
-	caster->SetInput(mitkInImage);
+	caster->SetInput(mitkItkImage);
 	caster->Update();
 	ItkRgbImageType::Pointer itkInImage = caster->GetOutput();
-	//itk ROI data
-	charImageType::Pointer referRoiItkImage = charImageType::New();
-	mitk::CastToItkImage(referRoiMitkImage, referRoiItkImage);
-	charImageType::Pointer lesionRoiItkImage = charImageType::New();
-	mitk::CastToItkImage(lesionRoiMitkImage, lesionRoiItkImage);
 
 	//define some generated itk data
 	charImageType::RegionType newRegion;
@@ -1148,178 +1116,109 @@ void USToolKitView::USQuantitation()
 	greyImage->SetDirection(itkInImage->GetDirection());
 	greyImage->Allocate();
 
-	charImageType::Pointer EPItkImage = charImageType::New();
+	int x = mitkItkImage->GetDimensions()[0];
+	int y = mitkItkImage->GetDimensions()[1];
+	int z = mitkItkImage->GetDimensions()[2];
+
+	MITK_INFO << "dimensions: " << x << " " << y << " " << z;
+
+	// calculate the gray Image
+	typedef itk::ImageRegionConstIterator< ItkRgbImageType > ConstIteratorType;
+	typedef itk::ImageRegionIterator< charImageType > IteratorType;
+	ConstIteratorType in(itkInImage, itkInImage->GetRequestedRegion());
+	IteratorType out(greyImage, greyImage->GetRequestedRegion());
+
+	for (in.GoToBegin(), out.GoToBegin(); !in.IsAtEnd(); ++in, ++out)
+	{
+		out.Set((in.Get().GetRed() * 30 + in.Get().GetGreen() * 59 + in.Get().GetBlue() * 11 + 50) / 100.0);
+	}
+
+	// add the gray image to main node
+	mitk::Image::Pointer greyMitkImage = mitk::Image::New();
+	mitk::CastToMitkImage(greyImage, greyMitkImage);
+	mitk::DataNode::Pointer newNode = mitk::DataNode::New();
+	newNode->SetData(greyMitkImage);
+	newNode->SetName("_gray");
+	this->GetDataStorage()->Add(newNode, node);
+
+}
+
+
+void USToolKitView::USConvertToEchoPower()
+{
+	mitk::DataNode* node = m_Controls.USPreprocessDataSelectionComBox->GetSelectedNode();
+	if (!node)
+		return;
+
+	mitk::Image::Pointer mitkInImage = dynamic_cast<mitk::Image*>(node->GetData());
+	if (!mitkInImage)
+		return;
+
+	typedef itk::Image< double, 3 > EPImageType;
+	typedef itk::Image< unsigned char, 3 > charImageType;
+	typedef itk::RGBPixel< unsigned char > PixelType;
+	typedef itk::Image< PixelType, 3 > ItkRgbImageType;
+	typedef mitk::ImageToItk< ItkRgbImageType > CasterType;
+	//original itk data
+	CasterType::Pointer caster = CasterType::New();
+	caster->SetInput(mitkInImage);
+	caster->Update();
+	ItkRgbImageType::Pointer itkInImage = caster->GetOutput();
+
+	//define some generated itk data
+	EPImageType::RegionType newRegion;
+	EPImageType::SizeType newSize = itkInImage->GetLargestPossibleRegion().GetSize();
+	newRegion.SetSize(itkInImage->GetLargestPossibleRegion().GetSize());
+	newRegion.SetIndex(itkInImage->GetLargestPossibleRegion().GetIndex());
+
+	EPImageType::SpacingType newSpacing;
+	newSpacing[0] = itkInImage->GetSpacing()[0];
+	newSpacing[1] = itkInImage->GetSpacing()[1];
+	newSpacing[2] = itkInImage->GetSpacing()[2];
+
+	EPImageType::Pointer EPItkImage = EPImageType::New();
 	EPItkImage->SetRegions(newRegion);
 	EPItkImage->SetSpacing(newSpacing);
 	EPItkImage->SetOrigin(itkInImage->GetOrigin());
 	EPItkImage->SetDirection(itkInImage->GetDirection());
 	EPItkImage->Allocate();
 
-	charImageType::Pointer EPReferItkImage = charImageType::New();
-	EPReferItkImage->SetRegions(newRegion);
-	EPReferItkImage->SetSpacing(newSpacing);
-	EPReferItkImage->SetOrigin(itkInImage->GetOrigin());
-	EPReferItkImage->SetDirection(itkInImage->GetDirection());
-	EPReferItkImage->Allocate();
-
-	charImageType::Pointer EPLesionItkImage = charImageType::New();
-	EPLesionItkImage->SetRegions(newRegion);
-	EPLesionItkImage->SetSpacing(newSpacing);
-	EPLesionItkImage->SetOrigin(itkInImage->GetOrigin());
-	EPLesionItkImage->SetDirection(itkInImage->GetDirection());
-	EPLesionItkImage->Allocate();
-
-	//get the dimensions of origianal image and set some parameter
 	int x = mitkInImage->GetDimensions()[0];
 	int y = mitkInImage->GetDimensions()[1];
 	int z = mitkInImage->GetDimensions()[2];
+
 	int Vmax = 32767;
 	int DR = 60;
-	int RoiSlice;
 
-	//convert RGB to gray and calculate the EPdata
-	ItkRgbImageType::IndexType pixelIndex;
-	charImageType::IndexType RoiPixelIndex;
-	typedef int RoiPixelType;
-	for (int i = 0; i < x; i++) {
-		for (int j = 0; j < y; j++) {
-			for (int k = 0; k < z; k++) {
-
-				pixelIndex[0] = i;
-				pixelIndex[1] = j;
-				pixelIndex[2] = k;
-				RoiPixelIndex[0] = i;
-				RoiPixelIndex[1] = j;
-				RoiPixelIndex[2] = k;
-				
-				PixelType onePixel = itkInImage->GetPixel(pixelIndex);
-				RoiPixelType lesionRoiPixel = lesionRoiItkImage->GetPixel(RoiPixelIndex);
-				//get the ROI slice position
-				if (lesionRoiPixel> 0) RoiSlice = k;
-				double greyPixel = (onePixel.GetRed() * 30 + onePixel.GetGreen() * 59 + onePixel.GetBlue() * 11 + 50) / 100.0;
-				greyImage->SetPixel(pixelIndex, greyPixel);
-				EPItkImage->SetPixel(pixelIndex, pow(Vmax, 2) * pow(10, ((greyPixel / 255.0 - 1) * DR) / 10));
-			}
-		}
-	}
-
-	//extract ROI
-	charImageType::IndexType EPPixelIndex;
-	for (int i = 0; i < x; i++) {
-		for (int j = 0; j < y; j++) {
-			for (int k = 0; k < z; k++) {
-
-				RoiPixelIndex[0] = i;
-				RoiPixelIndex[1] = j;
-				RoiPixelIndex[2] = RoiSlice;
-				EPPixelIndex[0] = i;
-				EPPixelIndex[1] = j;
-				EPPixelIndex[2] = k;
-
-				RoiPixelType EPItkPixel = EPItkImage->GetPixel(EPPixelIndex);
-				RoiPixelType lesionItkPixel = lesionRoiItkImage->GetPixel(RoiPixelIndex);
-				EPLesionItkImage->SetPixel(EPPixelIndex, EPItkPixel*lesionItkPixel);
-			}
-		}
-	}
-	
-	//using iterator to extract ROI
-	//typedef itk::ImageRegionConstIterator< charImageType > ConstIteratorType;
-	//typedef itk::ImageRegionIterator< charImageType > IteratorType;
-	//ConstIteratorType in1(EPItkImage, EPItkImage->GetRequestedRegion());
-	//ConstIteratorType in2(lesionRoiItkImage, lesionRoiItkImage->GetRequestedRegion());
-	//IteratorType out(EPLesionItkImage, EPItkImage->GetRequestedRegion());
-
-	//for (in1.GoToBegin(), in2.GoToBegin(), out.GoToBegin(); !in1.IsAtEnd(); ++in1, ++in2, ++out)
-	//{
-	//	out.Set(in1.Get() * in2.Get());
-	//}
-
-	//calculate the average EP
-	std::vector<double> EPAverageValue;
-	double RoiPixelCount=0;
-	double sumOfSlice=0;
-	for (int k = 0; k < z; k++) {
-
-		for (int i = 0; i < x; i++) {
-			for (int j = 0; j < y; j++) {
-
-				EPPixelIndex[0] = i;
-				EPPixelIndex[1] = j;
-				EPPixelIndex[2] = k;
-
-				RoiPixelType EPLesionItkPixel = EPLesionItkImage->GetPixel(EPPixelIndex);
-				if (EPLesionItkPixel > 0) {
-					sumOfSlice = sumOfSlice + EPLesionItkPixel;
-					RoiPixelCount++;
-				}
-			}
-		}
-		EPAverageValue.push_back(sumOfSlice / RoiPixelCount);
-		sumOfSlice = 0;
-		RoiPixelCount = 0;
-	}
-
-	// processing the time points
-	QString Qtimepoints = m_Controls.USLoadTableWidget->item(0, 2)->text();
-	std::string timepoints = Qtimepoints.toStdString();
-	timepoints.push_back('\\');
-	std::string tempstring;
-	std::vector<double> tempGrid;
-	double tempvalue;
-	for (auto ch : timepoints)
+	// calculate the Echo power Image
+	typedef itk::ImageRegionConstIterator< ItkRgbImageType > ConstIteratorType;
+	typedef itk::ImageRegionIterator< EPImageType > IteratorType;
+	ConstIteratorType in(itkInImage, itkInImage->GetRequestedRegion());
+	IteratorType out(EPItkImage, itkInImage->GetRequestedRegion());
+	double grayPixel;
+	for (in.GoToBegin(), out.GoToBegin(); !in.IsAtEnd(); ++in, ++out)
 	{
-		if (ch == '\\') {
-			tempGrid.push_back(stod(tempstring)/1000);
-			tempstring.clear();
-			continue;
-		}
-		tempstring.push_back(ch);
-	}
-	for (int i = 0; i < tempGrid.size(); i++)
-	{
-		if (i == 0)
-		{
-			tempGrid[i] = 0;
-			continue;
-		}
-		tempGrid[i] = tempGrid[i-1] + tempGrid[i];
+		grayPixel = (in.Get().GetRed() * 30 + in.Get().GetGreen() * 59 + in.Get().GetBlue() * 11 + 50) / 100.0;
+		out.Set(pow(Vmax, 2) * pow(10, ((grayPixel / 255.0 - 1) * DR) / 10));
 	}
 
-	//plot the curve
-	std::vector<double> fit(tempGrid.size());
-	//fit the curve
-	if ((!tempGrid.empty()) && (!EPAverageValue.empty()))
-		USModelFit(tempGrid.size(), &tempGrid[0], &EPAverageValue[0], &fit[0]);
-
-	USCurveTIC(tempGrid, EPAverageValue, fit);
-	// display the generated image
-	mitk::Image::Pointer greyMitkImage = mitk::Image::New();
+	// add the gray image to main node
 	mitk::Image::Pointer EPMitkImage = mitk::Image::New();
-	mitk::CastToMitkImage(greyImage, greyMitkImage);
 	mitk::CastToMitkImage(EPItkImage, EPMitkImage);
-	mitk::Image::Pointer EPLesionMitkImage = mitk::Image::New();
-	mitk::CastToMitkImage(EPLesionItkImage, EPLesionMitkImage);
-
-	mitk::DataNode::Pointer EPNode = mitk::DataNode::New();
-	EPNode->SetData(EPLesionMitkImage);
-	EPNode->SetName(nodeName + "_EPLesion");
-	this->GetDataStorage()->Add(EPNode, datanode);
-
-	//mitk::DataNode::Pointer greyNode = mitk::DataNode::New();
-	//greyNode->SetData(greyMitkImage);
-	//greyNode->SetName(nodeName + "_grey");
-	//this->GetDataStorage()->Add(greyNode, node);
-
-	//mitk::DataNode::Pointer EPNode = mitk::DataNode::New();
-	//EPNode->SetData(EPMitkImage);
-	//EPNode->SetName(nodeName + "_EP");
-	//this->GetDataStorage()->Add(EPNode, node);
-
-	MITK_INFO << "Quantitation done";
+	mitk::DataNode::Pointer newNode = mitk::DataNode::New();
+	newNode->SetData(EPMitkImage);
+	newNode->SetName(node->GetName()+"_Echo_Power");
+	this->GetDataStorage()->Add(newNode, node);
 }
 
 
+void USToolKitView::USDenoiseStart()
+{
+
+}
+
+
+// apply the fitted parameter
 int gammaVariateFit(int m, int n, double *p, double *dy, double **dvec, void *vars)
 {
 	struct vars_struct *v = (struct vars_struct *) vars;
@@ -1384,6 +1283,8 @@ int gammaVariateFit(int m, int n, double *p, double *dy, double **dvec, void *va
 	return 0;
 }
 
+
+// modify the parameter
 int gammaVariate(int m, int n, double *p, double *dy, double **dvec, void *vars)
 {
 	struct vars_struct *v = (struct vars_struct *) vars;
@@ -1453,6 +1354,8 @@ int gammaVariate(int m, int n, double *p, double *dy, double **dvec, void *vars)
 	return 0;
 }
 
+
+// fit the model
 void USToolKitView::USModelFit(int timeSteps, double *t, double *EP, double *fit)
 {
 	// y[] : original column
@@ -1465,12 +1368,12 @@ void USToolKitView::USModelFit(int timeSteps, double *t, double *EP, double *fit
 			concMax = EP[i];
 		}
 	}
-	
+
 	//double *t1 = new double[timeSteps];
 	//double *fit = new double[timeSteps];
 	double *time2 = new double[timeSteps];
 	//double *y1 = new double[timeSteps];
-	   
+
 	// related to gamma 
 	const int NumParams = 3;            //2 for Patlak, leave the other 3 there for future possible models
 	mp_par pars[NumParams];                /* Parameter constraints */
@@ -1481,26 +1384,26 @@ void USToolKitView::USModelFit(int timeSteps, double *t, double *EP, double *fit
 	pars[0].limits[0] = 0;
 	pars[0].limited[1] = 1;
 	pars[0].limits[1] = concMax * 2;
-	   
+
 	//alpha constraint
 	pars[1].limited[0] = 1;
 	pars[1].limits[0] = 0;
 	pars[1].limited[1] = 1;
 	pars[1].limits[1] = 3;
-	   
+
 	//beta constraint
 	pars[2].limited[0] = 1;
 	pars[2].limits[0] = 0;
 	pars[2].limited[1] = 1;
 	pars[2].limits[1] = 50;
-	   
+
 	double p[] = { 1, 1, 1 };
 
 	struct vars_struct v;
 
 	mp_result result;
 	memset(&result, 0, sizeof(result));
-	
+
 	// adapt time interval 
 	for (int i = 0; i < timeSteps; i++)
 	{
@@ -1520,29 +1423,24 @@ void USToolKitView::USModelFit(int timeSteps, double *t, double *EP, double *fit
 
 
 	MITK_INFO << "Finish Gamma Fit";
-
-
-	//// 曲线
-	//bool plotSuccessed = this->StartPlotAIF(t, y, y1, fit, "AIF Plotting", QPen(Qt::green), QPen(Qt::blue), QPen(Qt::red),
-	//	"Time(s)", "Intensity(HU)",
-	//	timeSteps, NULL);	
 }
 
 
+// plot the curve
 void USToolKitView::USCurveTIC(std::vector<double> tempGrid, std::vector<double> statisticsMean, std::vector<double> fit)
 {
-	m_Controls.widgetPlot->Clear();
+	m_Controls.USSignalCurveWidgetPlot->Clear();
 
 	std::string xAxis = "Time[s]";
 	std::string yAxis = "Echo power";
 	std::string plotTitle = "TIC Plot";
 
-	m_Controls.widgetPlot->SetAxisTitle(QwtPlot::xBottom, xAxis.c_str());
-	m_Controls.widgetPlot->SetAxisTitle(QwtPlot::yLeft, yAxis.c_str());
-	m_Controls.widgetPlot->SetPlotTitle(plotTitle.c_str());
+	m_Controls.USSignalCurveWidgetPlot->SetAxisTitle(QwtPlot::xBottom, xAxis.c_str());
+	m_Controls.USSignalCurveWidgetPlot->SetAxisTitle(QwtPlot::yLeft, yAxis.c_str());
+	m_Controls.USSignalCurveWidgetPlot->SetPlotTitle(plotTitle.c_str());
 
-	unsigned int curveId = this->m_Controls.widgetPlot->InsertCurve("TIC");
-	unsigned int curveFitId = this->m_Controls.widgetPlot->InsertCurve("Fit");
+	unsigned int curveId = this->m_Controls.USSignalCurveWidgetPlot->InsertCurve("TIC");
+	unsigned int curveFitId = this->m_Controls.USSignalCurveWidgetPlot->InsertCurve("Fit");
 
 	QPen pen(Qt::DashLine);
 	pen.setWidth(1);
@@ -1551,194 +1449,244 @@ void USToolKitView::USCurveTIC(std::vector<double> tempGrid, std::vector<double>
 	penfit.setWidth(1);
 	penfit.setColor(Qt::red);
 
-	m_Controls.widgetPlot->SetCurveData(curveId, tempGrid, statisticsMean);
-	m_Controls.widgetPlot->SetCurvePen(curveId, pen);
-	m_Controls.widgetPlot->SetCurveStyle(curveId, QwtPlotCurve::Lines);
-	m_Controls.widgetPlot->SetCurveData(curveFitId, tempGrid, fit);
-	m_Controls.widgetPlot->SetCurvePen(curveFitId, penfit);
-	m_Controls.widgetPlot->SetCurveStyle(curveFitId, QwtPlotCurve::Lines);
-	m_Controls.widgetPlot->Replot();
+	m_Controls.USSignalCurveWidgetPlot->SetCurveData(curveId, tempGrid, statisticsMean);
+	m_Controls.USSignalCurveWidgetPlot->SetCurvePen(curveId, pen);
+	m_Controls.USSignalCurveWidgetPlot->SetCurveStyle(curveId, QwtPlotCurve::Lines);
+	m_Controls.USSignalCurveWidgetPlot->SetCurveData(curveFitId, tempGrid, fit);
+	m_Controls.USSignalCurveWidgetPlot->SetCurvePen(curveFitId, penfit);
+	m_Controls.USSignalCurveWidgetPlot->SetCurveStyle(curveFitId, QwtPlotCurve::Lines);
+	m_Controls.USSignalCurveWidgetPlot->Replot();
 
-
-	//this->SetDataOverlayShow();
 	this->GlobalReinit(true);
 
 }
 
 
-/*
-void USToolKitView::USExtractChannel()
+void USToolKitView::USExtractROI()
 {
-	// if user selected  the data
-	mitk::DataNode* node = m_Controls.USPreprocessDataSelectionComBox->GetSelectedNode();
-	if (!node)
-		return;
 
-	typedef itk::Image< unsigned char, 3 > charimageType;
+}
+
+
+void USToolKitView::USGetTimeData(mitk::DataNode *dataNode, double *tempGrid)
+{
+	std::string timepoints;
+	dataNode->GetStringProperty("Timevector", timepoints);
+	timepoints.push_back('\\');
+	std::string tempstring;
+	double tempvalue;
+	int count = 0;
+	// extract the number from time points vector which looks like "0\115\115\116"
+	for (auto ch : timepoints)
+	{
+		if (ch == '\\') {
+			cout << tempstring << endl;
+			*tempGrid = stod(tempstring) / 1000;
+			++tempGrid;
+			++count;
+			tempstring.clear();
+			continue;
+		}
+		tempstring.push_back(ch);
+	}
+	// convert the int vector to continious time sequence
+	for (int i = 0; i < count; i++)
+	{
+		if (i == 0)
+		{
+			tempGrid[i] = 0;
+			continue;
+		}
+		tempGrid[i] = tempGrid[i - 1] + tempGrid[i];
+	}
+}
+
+
+void USToolKitView::USQuantitation()
+{
+	//get ROI node
+	mitk::DataNode* referNode = m_Controls.USReferenceSelectorCombox->GetSelectedNode();
+	mitk::DataNode* lesionNode = m_Controls.USLesionSelectorCombox->GetSelectedNode();
+	//get original image node
+	mitk::DataNode* dataNode = m_Controls.USPreprocessDataSelectionComBox->GetSelectedNode();
+	
+	std::string nodeName = dataNode->GetName();
+	//MITK_INFO << nodeName;
+
+	if ((!referNode) || (!lesionNode) || (!dataNode)) return;
+
+	//get the mitk ROI
+	mitk::Image::Pointer referRoiMitkImage = dynamic_cast<mitk::Image*>(referNode->GetData());
+	mitk::Image::Pointer lesionRoiMitkImage = dynamic_cast<mitk::Image*>(lesionNode->GetData());
 
 	mitk::DataStorage::SetOfObjects::ConstPointer _NodeSets = m_Controls.USPreprocessDataSelectionComBox->GetNodes();
-	for (mitk::DataStorage::SetOfObjects::ConstIterator iter2 = _NodeSets->Begin(); iter2 != _NodeSets->End(); ++iter2)
+	for (mitk::DataStorage::SetOfObjects::ConstIterator it = _NodeSets->Begin(); it != _NodeSets->End(); ++it)
 	{
-		mitk::DataNode* node = const_cast<mitk::DataNode*>(iter2->Value().GetPointer());
-		if (!node)
-			continue;
+		mitk::DataNode* dataNode = const_cast<mitk::DataNode*>(it->Value().GetPointer());
+		std::string nodeName = dataNode->GetName();
+		if (nodeName.length() < 10) continue;
+		if ((!dataNode) || ((nodeName.substr(nodeName.length() - 10, nodeName.length()))!="Echo_Power")) continue;
+		mitk::Image::Pointer EPMitkImage = dynamic_cast<mitk::Image*>(dataNode->GetData());
+		MITK_INFO << nodeName;
+		//convert to itk data
+		typedef itk::Image<double, 3> charImageType;
+		//itk ROI data
+		charImageType::Pointer referRoiItkImage = charImageType::New();
+		mitk::CastToItkImage(referRoiMitkImage, referRoiItkImage);
+		charImageType::Pointer lesionRoiItkImage = charImageType::New();
+		mitk::CastToItkImage(lesionRoiMitkImage, lesionRoiItkImage);
+		//itk EP data
+		charImageType::Pointer EPItkImage = charImageType::New();
+		mitk::CastToItkImage(EPMitkImage, EPItkImage);
 
-		mitk::Image::Pointer mitkInImage = dynamic_cast<mitk::Image*>(node->GetData());
-		if (!mitkInImage)
-			continue;
+		//define some generated itk data
+		charImageType::RegionType newRegion;
+		charImageType::SizeType newSize = EPItkImage->GetLargestPossibleRegion().GetSize();
+		newRegion.SetSize(EPItkImage->GetLargestPossibleRegion().GetSize());
+		newRegion.SetIndex(EPItkImage->GetLargestPossibleRegion().GetIndex());
 
-		std::string nodeName = node->GetName();
-		MITK_INFO << "name: " << nodeName;
-
-		//mitk RGB×ªITK RGBÍ¼Ïñ
-		typedef itk::RGBPixel<unsigned char> PixelType;
-		typedef itk::Image< PixelType, 3 > ItkRgbImageType;
-		typedef mitk::ImageToItk< ItkRgbImageType > CasterType;
-		CasterType::Pointer caster = CasterType::New();
-		caster->SetInput(mitkInImage);
-		caster->Update();
-		ItkRgbImageType::Pointer itkInImage = caster->GetOutput();
-
-		charimageType::RegionType newRegion;
-		charimageType::SizeType newSize = itkInImage->GetLargestPossibleRegion().GetSize();
-		newRegion.SetSize(itkInImage->GetLargestPossibleRegion().GetSize());
-		newRegion.SetIndex(itkInImage->GetLargestPossibleRegion().GetIndex());
-
-
-		charimageType::SpacingType newSpacing;
-		newSpacing[0] = itkInImage->GetSpacing()[0];
-		newSpacing[1] = itkInImage->GetSpacing()[1];
-		newSpacing[2] = itkInImage->GetSpacing()[2];
+		charImageType::SpacingType newSpacing;
+		newSpacing[0] = EPItkImage->GetSpacing()[0];
+		newSpacing[1] = EPItkImage->GetSpacing()[1];
+		newSpacing[2] = EPItkImage->GetSpacing()[2];
 
 
-		charimageType::Pointer redImage = charimageType::New();
-		redImage->SetRegions(newRegion);
-		redImage->SetSpacing(newSpacing);
-		redImage->SetOrigin(itkInImage->GetOrigin());
-		redImage->SetDirection(itkInImage->GetDirection());
-		redImage->Allocate();
+		charImageType::Pointer EPReferItkImage = charImageType::New();
+		EPReferItkImage->SetRegions(newRegion);
+		EPReferItkImage->SetSpacing(newSpacing);
+		EPReferItkImage->SetOrigin(EPItkImage->GetOrigin());
+		EPReferItkImage->SetDirection(EPItkImage->GetDirection());
+		EPReferItkImage->Allocate();
 
-		charimageType::Pointer blueImage = charimageType::New();
-		blueImage->SetRegions(newRegion);
-		blueImage->SetSpacing(newSpacing);
-		blueImage->SetOrigin(itkInImage->GetOrigin());
-		blueImage->SetDirection(itkInImage->GetDirection());
-		blueImage->Allocate();
+		charImageType::Pointer EPLesionItkImage = charImageType::New();
+		EPLesionItkImage->SetRegions(newRegion);
+		EPLesionItkImage->SetSpacing(newSpacing);
+		EPLesionItkImage->SetOrigin(EPItkImage->GetOrigin());
+		EPLesionItkImage->SetDirection(EPItkImage->GetDirection());
+		EPLesionItkImage->Allocate();
 
-		charimageType::Pointer greenImage = charimageType::New();
-		greenImage->SetRegions(newRegion);
-		greenImage->SetSpacing(newSpacing);
-		greenImage->SetOrigin(itkInImage->GetOrigin());
-		greenImage->SetDirection(itkInImage->GetDirection());
-		greenImage->Allocate();
+		//get the dimensions of origianal image and set some parameter
+		int x = EPMitkImage->GetDimensions()[0];
+		int y = EPMitkImage->GetDimensions()[1];
+		int z = EPMitkImage->GetDimensions()[2];
+		int Vmax = 32767;
+		int DR = 60;
+		int RoiSlice;
 
-		charimageType::Pointer greyImage = charimageType::New();
-		greyImage->SetRegions(newRegion);
-		greyImage->SetSpacing(newSpacing);
-		greyImage->SetOrigin(itkInImage->GetOrigin());
-		greyImage->SetDirection(itkInImage->GetDirection());
-		greyImage->Allocate();
+		// get the RoiSlice Position
+		charImageType::IndexType RoiPixelIndex;
+		for (int i = 0; i < x; i++) {
+			for (int j = 0; j < y; j++) {
+				for (int k = 0; k < z; k++) {
+					RoiPixelIndex[0] = i;
+					RoiPixelIndex[1] = j;
+					RoiPixelIndex[2] = k;
 
-
-		int x = mitkInImage->GetDimensions()[0];
-		int y = mitkInImage->GetDimensions()[1];
-		int z = mitkInImage->GetDimensions()[2];
-
-		//·Ö±ðÌáÈ¡RGB£¬ÒÔ¼°ºÏ³É»Ò¶ÈÍ¼Ïñ
-		ItkRgbImageType::IndexType pixelIndex;
+					if (lesionRoiItkImage->GetPixel(RoiPixelIndex) > 0)
+					{
+						RoiSlice = k;
+						break;
+					};
+				}
+			}
+		}
+		MITK_INFO << RoiSlice;
+		//**********extract ROI****************
+		charImageType::IndexType EPPixelIndex;
+		typedef double RoiPixelType;
 		for (int i = 0; i < x; i++) {
 			for (int j = 0; j < y; j++) {
 				for (int k = 0; k < z; k++) {
 
-					pixelIndex[0] = i;
-					pixelIndex[1] = j;
-					pixelIndex[2] = k;
-					PixelType onePixel = itkInImage->GetPixel(pixelIndex);
+					RoiPixelIndex[0] = i;
+					RoiPixelIndex[1] = j;
+					RoiPixelIndex[2] = RoiSlice;
+					EPPixelIndex[0] = i;
+					EPPixelIndex[1] = j;
+					EPPixelIndex[2] = k;
 
-					redImage->SetPixel(pixelIndex, onePixel.GetRed());
-					greenImage->SetPixel(pixelIndex, onePixel.GetGreen());
-					blueImage->SetPixel(pixelIndex, onePixel.GetBlue());
-					greyImage->SetPixel(pixelIndex, (onePixel.GetRed() * 30 + onePixel.GetGreen() * 59 + onePixel.GetBlue() * 11 + 50) / 100);
+					RoiPixelType EPItkPixel = EPItkImage->GetPixel(EPPixelIndex);
+					RoiPixelType lesionItkPixel = lesionRoiItkImage->GetPixel(RoiPixelIndex);
+					RoiPixelType referItkPixel = referRoiItkImage->GetPixel(RoiPixelIndex);
+					EPLesionItkImage->SetPixel(EPPixelIndex, EPItkPixel*lesionItkPixel);
+					EPReferItkImage->SetPixel(EPPixelIndex, EPItkPixel*referItkPixel);
 				}
 			}
 		}
 
-		mitk::Image::Pointer bImage = mitk::Image::New();
-		mitk::Image::Pointer rImage = mitk::Image::New();
-		mitk::Image::Pointer gImage = mitk::Image::New();
-		mitk::Image::Pointer greyMitkImage = mitk::Image::New();
+		//**********calculate the average EP************
+		std::vector<double> EPAverageValue;
+		double RoiPixelCount = 0;
+		int RoiNum = 0;
+		double sumOfSlice = 0;
+		for (int k = 0; k < z; k++) {
 
-		mitk::CastToMitkImage(redImage, rImage);
-		mitk::CastToMitkImage(greenImage, gImage);
-		mitk::CastToMitkImage(blueImage, bImage);
-		mitk::CastToMitkImage(greyImage, greyMitkImage);
+			for (int i = 0; i < x; i++) {
+				for (int j = 0; j < y; j++) {
 
+					EPPixelIndex[0] = i;
+					EPPixelIndex[1] = j;
+					EPPixelIndex[2] = k;
 
-		mitk::DataNode::Pointer bNode = mitk::DataNode::New();
-		bNode->SetData(bImage);
-		bNode->SetName(nodeName+"_blue");
-		this->GetDataStorage()->Add(bNode,node);
+					RoiPixelType EPLesionItkPixel = EPLesionItkImage->GetPixel(EPPixelIndex);
+					if (EPLesionItkPixel > 0) {
+						sumOfSlice = sumOfSlice + EPLesionItkPixel;
+						RoiPixelCount++;
+					}
+				}
+			}
+			EPAverageValue.push_back(sumOfSlice / RoiPixelCount);
+			sumOfSlice = 0;
+			RoiNum = RoiPixelCount;
+			RoiPixelCount = 0;
+		}
 
+		//************processing the time points*******************
+		//std::vector<double> tempGrid;
+		//USGetTimeData(dataNode, &tempGrid[0]);
+		std::string timepoints;
+		dataNode->GetStringProperty("Timevector", timepoints);
+		timepoints.push_back('\\');
+		std::string tempstring;
+		std::vector<double> tempGrid;
+		double tempvalue;
+		for (auto ch : timepoints)
+		{
+			if (ch == '\\') {
+				tempGrid.push_back(stod(tempstring) / 1000);
+				tempstring.clear();
+				continue;
+			}
+			tempstring.push_back(ch);
+		}
+		for (int i = 0; i < tempGrid.size(); i++)
+		{
+			if (i == 0)
+			{
+				tempGrid[i] = 0;
+				continue;
+			}
+			tempGrid[i] = tempGrid[i - 1] + tempGrid[i];
+		}
+		MITK_INFO << tempGrid[100];
+		MITK_INFO << tempGrid[101];
+		MITK_INFO << tempGrid.size();
+		//*******plot the curve************
+		std::vector<double> fit(tempGrid.size());
+		//fit the curve
+		if ((!tempGrid.empty()) && (!EPAverageValue.empty()))
+			USModelFit(tempGrid.size(), &tempGrid[0], &EPAverageValue[0], &fit[0]);
 
-		mitk::DataNode::Pointer rNode = mitk::DataNode::New();
-		rNode->SetData(rImage);
-		rNode->SetName(nodeName+"_red");
-		this->GetDataStorage()->Add(rNode, node);
+		USCurveTIC(tempGrid, EPAverageValue, fit);
 
-		mitk::DataNode::Pointer gNode = mitk::DataNode::New();
-		gNode->SetData(gImage);
-		gNode->SetName(nodeName + "_green");
-		this->GetDataStorage()->Add(gNode,node);
+		//******display the generated image**********
+		//mitk::Image::Pointer EPLesionMitkImage = mitk::Image::New();
+		//mitk::CastToMitkImage(EPLesionItkImage, EPLesionMitkImage);
 
-		mitk::DataNode::Pointer greyNode = mitk::DataNode::New();
-		greyNode->SetData(greyMitkImage);
-		greyNode->SetName(nodeName+"_grey");
-		this->GetDataStorage()->Add(greyNode, node);
-
-
+		//mitk::DataNode::Pointer EPLesionNode = mitk::DataNode::New();
+		//EPLesionNode->SetData(EPLesionMitkImage);
+		//EPLesionNode->SetName(nodeName + "_EPLesion");
+		//this->GetDataStorage()->Add(EPLesionNode, dataNode);
+		//MITK_INFO << "Quantitation done";
 	}
-	
-}
-*/
-
-
-void USToolKitView::ConvertToEchoPower()
-{
-
-}
-
-void USToolKitView::USRGBConvertGray() 
-{
-	//mitk::DataNode* node = m_Controls.USPreprocessDataSelectionComBox->GetSelectedNode();
-	//if (!node)
-	//	return;
-
-	//mitk::Image::Pointer image = dynamic_cast<mitk::Image*>(node->GetData());
-	//if (!image)
-	//	return;
-
-	//int x = image->GetDimensions()[0];
-	//int y = image->GetDimensions()[1];
-	//int z = image->GetDimensions()[2];
-
-	//MITK_INFO << "dimensions: " << x << " " << y << " " << z;
-
-	//cv::Mat image2(y, x, CV_16U, image->GetData());
-	////mitk::ImageToOpenCVImageFilter::Pointer cvFilter = mitk::ImageToOpenCVImageFilter::New();
-	////cvFilter->SetImage(image);
-	////cv::Mat cvImage = cvFilter->GetOpenCVMat();
-
-	//mitk::ConvertGrayscaleOpenCVImageFilter::Pointer cvGrayFilter = mitk::ConvertGrayscaleOpenCVImageFilter::New();
-	//cvGrayFilter->FilterImage(image2);
-
-	//mitk::OpenCVToMitkImageFilter::Pointer mitkGrayImageFromCV = mitk::OpenCVToMitkImageFilter::New();
-	//mitkGrayImageFromCV->SetOpenCVMat(image2);
-	//mitk::Image::Pointer convertImage = mitkGrayImageFromCV->GetOutput();
-
-	//mitk::DataNode::Pointer newNode = mitk::DataNode::New();
-	//newNode->SetData(convertImage);
-	//newNode->SetName("test");
-
-	//this->GetDataStorage()->Add(newNode);
-	
 }

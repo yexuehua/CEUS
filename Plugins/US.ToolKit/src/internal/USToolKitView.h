@@ -72,6 +72,20 @@
 #include <mitkDataStorageSelection.h>
 #include <mpfit.h>
 
+// GammaFitting
+struct vars_struct
+{
+	double    *x;                //phase number
+	float    *t;                //phase time
+	double    *y;                //concentration value
+	double    at;                //initial bolus arrival time
+	double    *ey;            //weight for each point
+	double    *originalAif;
+	double    delay;            //time delay
+	int        lastTime;        //last time
+};
+
+
 class USToolKitView : public QmitkAbstractView 
 {
   Q_OBJECT
@@ -102,7 +116,9 @@ protected slots:
 	void USReferenceDataSelection(int index);
 	void USLesionDataSelection(int index);
 	void USRGBConvertGray();
-	//void USExtractChannel();
+	void USConvertToEchoPower();
+	void USDenoiseStart();
+	void USSequenceEdit(int index);
 
 private:
 	//data loading
@@ -112,14 +128,14 @@ private:
 
 	template<typename TImageType>
 	mitk::Image::Pointer ReadRGBImageFileByITK(const std::string filename);
-
-	void ConvertToEchoPower();
 	void GlobalReinit(bool);
 	void ShowOnlySelectedNodes(const mitk::DataNode* selectedNode);
 	void ReadImageFromFolder(const QString & path);
-	//bool ShowSUVInfo(std::string USDicomPath);
+	void USExtractROI();
+	void USGetTimeData(mitk::DataNode *dataNode, double *tempGrid);
 	void USCurveTIC(std::vector<double> tempGrid, std::vector<double> statisticsMean, std::vector<double> fit);
 	void USModelFit(int timeSteps, double *t, double *y, double *fit);
+	//bool ShowSUVInfo(std::string USDicomPath);
 	//int gammaVariateFit(int m, int n, double *p, double *dy, double **dvec, void *vars);
 	//int gammaVariate(int m, int n, double *p, double *dy, double **dvec, void *vars);
 
