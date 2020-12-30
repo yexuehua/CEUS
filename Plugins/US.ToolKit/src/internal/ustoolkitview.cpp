@@ -276,6 +276,11 @@ void USToolKitView::SetFocus()
 void USToolKitView::CreateQtPartControl(QWidget *parent)
 {
 	m_Controls.setupUi(parent);
+	//image type select
+	m_Controls.DCEUSDynamicGroupBox->setVisible(false);
+	m_Controls.DCEUSStaticGroupBox->setVisible(false);
+	m_Controls.ColorUSGroupBox->setVisible(false);
+
 	connect(m_Controls.USLoadDiocmButton, SIGNAL(clicked()), this, SLOT(LoadDicomUS()));
 
 	//combox predicate
@@ -309,8 +314,9 @@ void USToolKitView::CreateQtPartControl(QWidget *parent)
 	connect(m_Controls.USConvertEPButton, SIGNAL(clicked()), this, SLOT(USConvertToEchoPower()));
 	connect(m_Controls.USDenoiseStartButton, SIGNAL(clicked()), this, SLOT(USDenoiseStart()));
 	connect(m_Controls.USQuantitationButton, SIGNAL(clicked()), this, SLOT(USQuantitation()));
-
-
+	connect(m_Controls.DCEUSDynamicCheckbox, SIGNAL(clicked()), this, SLOT(DCEUSDynamicDisply()));
+	connect(m_Controls.DCEUSStaticCheckbox, SIGNAL(clicked()), this, SLOT(DCEUSStaticDisply()));
+	connect(m_Controls.ColorUSCheckbox, SIGNAL(clicked()), this, SLOT(ColorUSDisply()));
 }
 
 
@@ -706,372 +712,6 @@ void USToolKitView::USLesionDataSelection(int index) {
 }
 
 
-//bool USToolKitView::ShowSUVInfo(std::string USDicomPath)
-//{
-//	m_Controls.lineEditWeight->clear();
-//	m_Controls.lineEditHeight->clear();
-//	m_Controls.lineEditInjectDose->clear();
-//	m_Controls.lineEditInjectTime->clear();
-//	m_Controls.lineEditSeriesTime->clear();
-//	m_Controls.lineEditSex->clear();
-//	m_Controls.lineEditHalf->clear();
-//	m_Controls.lineEditDecayCorrection->clear();
-//
-//
-//	typedef itk::GDCMSeriesFileNames InputNamesGeneratorType;
-//	//获取文件夹中所有dicom序列
-//	InputNamesGeneratorType::Pointer inputNames = InputNamesGeneratorType::New();
-//	inputNames->SetUseSeriesDetails(true);
-//	inputNames->SetDirectory(USDicomPath);
-//
-//	itk::SerieUIDContainer seriesUIDs = inputNames->GetSeriesUIDs();
-//
-//	//获取文件名
-//	typedef short PixelValueType;
-//	typedef itk::Image< PixelValueType, 3 > VolumeType;
-//	typedef itk::ImageSeriesReader< VolumeType > VolumeReaderType;
-//	const VolumeReaderType::FileNamesContainer & filenames = inputNames->GetFileNames(seriesUIDs[0]);
-//	std::string firstDicomFileName = filenames.front();
-//
-//	//加载文件
-//	DcmFileFormat dfile;
-//	OFCondition status = dfile.loadFile(OFFilename(firstDicomFileName.c_str()));
-//	//MITK_INFO << firstDicomFileName.c_str();
-//
-//	if (status.bad())
-//	{
-//		return false;
-//	}
-//
-//
-//	//获取数据
-//	DcmDataset *data = dfile.getDataset();
-//
-//	#define DCM_Modality   DcmTagKey(0x0008, 0x0060)
-//	#define DCM_injectionTime  DcmTagKey(0x0018, 0x1072)
-//	#define DCM_injectedDose  DcmTagKey(0x0018, 0x1074)
-//	#define DCM_volumeUnits  DcmTagKey(0x0054, 0x1001)
-//	#define DCM_height  DcmTagKey(0x0010, 0x1020)
-//	#define DCM_weight  DcmTagKey(0x0010, 0x1030)
-//	#define DCM_patientSex  DcmTagKey(0x0010, 0x0040)
-//	#define DCM_radionuclideHalfLife  DcmTagKey(0x0018, 0x1075)
-//	#define DCM_SeriesTimes DcmTagKey(0x0008, 0x0031)
-//	#define DCM_DecayCorrection DcmTagKey(0x0054, 0x1102)
-//
-//	OFString Modality;
-//	data->findAndGetOFString(DCM_Modality, Modality);
-//	std::string dataModality = Modality.c_str();
-//
-//	OFString injectionTime;
-//	data->findAndGetOFString(DCM_injectionTime, injectionTime, 0, OFTrue);
-//	std::string dataInjectionTime = injectionTime.c_str();
-//
-//	OFString injectedDose;
-//	data->findAndGetOFString(DCM_injectedDose, injectedDose, 0, OFTrue);
-//	std::string dataInjectedDose = injectedDose.c_str();
-//
-//
-//	OFString volumeUnits;
-//	data->findAndGetOFString(DCM_volumeUnits, volumeUnits, 0, OFTrue);
-//	std::string dataVolumeUnits = volumeUnits.c_str();
-//
-//	OFString height;
-//	data->findAndGetOFString(DCM_height, height);
-//	std::string dataHeight = height.c_str();
-//
-//	OFString weight;
-//	data->findAndGetOFString(DCM_weight, weight);
-//	std::string dataWeight = weight.c_str();
-//
-//	OFString patientSex;
-//	data->findAndGetOFString(DCM_patientSex, patientSex);
-//	std::string dataPatientSex = patientSex.c_str();
-//
-//	OFString radionuclideHalfLife;
-//	data->findAndGetOFString(DCM_radionuclideHalfLife, radionuclideHalfLife, 0, OFTrue);
-//	std::string dataRadionuclideHalfLife = radionuclideHalfLife.c_str();
-//
-//	OFString seriesTime;
-//	data->findAndGetOFString(DCM_SeriesTimes, seriesTime);
-//	std::string dataSeriesTime = seriesTime.c_str();
-//
-//	OFString DecayCorrection;
-//	data->findAndGetOFString(DCM_DecayCorrection, DecayCorrection);
-//	std::string dataDecayCorrection = DecayCorrection.c_str();
-//
-//
-//	MITK_INFO << "output dicom tag info:";
-//	MITK_INFO << "modality: " << dataModality;
-//	MITK_INFO << "injectionTime: " << dataInjectionTime;
-//	MITK_INFO << "injectedDose: " << dataInjectedDose;
-//	MITK_INFO << "volumeUnits: " << dataVolumeUnits;
-//	MITK_INFO << "height: " << dataHeight;
-//	MITK_INFO << "weight: " << dataWeight;
-//	MITK_INFO << "patientSex: " << dataPatientSex;
-//	MITK_INFO << "radionuclideHalfLife: " << dataRadionuclideHalfLife;
-//	MITK_INFO << "seriesTime: " << dataSeriesTime;
-//
-//	//注射时间格式转换
-//	std::string tag;
-//	std::string yearstr;
-//	std::string monthstr;
-//	std::string daystr;
-//	std::string hourstr;
-//	std::string minutestr;
-//	std::string secondstr;
-//	int len;
-//	if (dataInjectionTime.c_str() != NULL && *(dataInjectionTime.c_str()) != '\0')
-//	{
-//		len = dataInjectionTime.length();
-//		hourstr.clear();
-//		minutestr.clear();
-//		secondstr.clear();
-//		if (len >= 2)
-//		{
-//			hourstr = dataInjectionTime.substr(0, 2);
-//		}
-//		else
-//		{
-//			hourstr = "00";
-//		}
-//		if (len >= 4)
-//		{
-//			minutestr = dataInjectionTime.substr(2, 2);
-//		}
-//		else
-//		{
-//			minutestr = "00";
-//		}
-//		if (len >= 6)
-//		{
-//			secondstr = dataInjectionTime.substr(4);
-//		}
-//		else
-//		{
-//			secondstr = "00";
-//		}
-//		tag.clear();
-//		tag = hourstr.c_str();
-//		tag += ":";
-//		tag += minutestr.c_str();
-//		tag += ":";
-//		tag += secondstr.c_str();
-//		dataInjectionTime = tag.c_str();
-//	}
-//	else {
-//		dataInjectionTime = "";
-//		MITK_WARN << " No injection time ";
-//
-//	}
-//
-//
-//	if (dataVolumeUnits.c_str() != NULL && *(dataVolumeUnits.c_str()) != '\0')
-//	{
-//		//--- I think these are piled together. MBq ml... search for all.
-//		std::string units = dataVolumeUnits.c_str();
-//		if ((units.find("BQML") != std::string::npos) ||
-//			(units.find("BQML") != std::string::npos))
-//		{
-//			dataVolumeUnits = "Bq";
-//		}
-//		else if ((units.find("MBq") != std::string::npos) ||
-//			(units.find("MBQ") != std::string::npos))
-//		{
-//			dataVolumeUnits = "MBq";
-//		}
-//		else if ((units.find("kBq") != std::string::npos) ||
-//			(units.find("kBQ") != std::string::npos) ||
-//			(units.find("KBQ") != std::string::npos))
-//		{
-//			dataVolumeUnits = "kBq";
-//		}
-//		else if ((units.find("mBq") != std::string::npos) ||
-//			(units.find("mBQ") != std::string::npos))
-//		{
-//			dataVolumeUnits = "mBq";
-//		}
-//		else if ((units.find("uBq") != std::string::npos) ||
-//			(units.find("uBQ") != std::string::npos))
-//		{
-//			dataVolumeUnits = "uBq";
-//		}
-//		else if ((units.find("Bq") != std::string::npos) ||
-//			(units.find("BQ") != std::string::npos))
-//		{
-//			dataVolumeUnits = "Bq";
-//		}
-//		else if ((units.find("MCi") != std::string::npos) ||
-//			(units.find("MCI") != std::string::npos))
-//		{
-//			dataVolumeUnits = "MCi";
-//		}
-//		else if ((units.find("kCi") != std::string::npos) ||
-//			(units.find("kCI") != std::string::npos) ||
-//			(units.find("KCI") != std::string::npos))
-//		{
-//			dataVolumeUnits = "kCi";
-//		}
-//		else if ((units.find("mCi") != std::string::npos) ||
-//			(units.find("mCI") != std::string::npos))
-//		{
-//			dataVolumeUnits = "mCi";
-//		}
-//		else if ((units.find("uCi") != std::string::npos) ||
-//			(units.find("uCI") != std::string::npos))
-//		{
-//			dataVolumeUnits = "uCi";
-//		}
-//		else if ((units.find("Ci") != std::string::npos) ||
-//			(units.find("CI") != std::string::npos))
-//		{
-//			dataVolumeUnits = "Ci";
-//		}
-//	}
-//	else
-//	{
-//		dataVolumeUnits = "MBq";
-//		MITK_WARN << " No radioactivity units, default is MBq ";
-//	}
-//
-//	//--- SeriesTime
-//	if (dataSeriesTime.c_str() != NULL && *(dataSeriesTime.c_str()) != '\0')
-//	{
-//		hourstr.clear();
-//		minutestr.clear();
-//		secondstr.clear();
-//		len = dataSeriesTime.length();
-//		if (len >= 2)
-//		{
-//			hourstr = dataSeriesTime.substr(0, 2);
-//		}
-//		else
-//		{
-//			hourstr = "00";
-//		}
-//		if (len >= 4)
-//		{
-//			minutestr = dataSeriesTime.substr(2, 2);
-//		}
-//		else
-//		{
-//			minutestr = "00";
-//		}
-//		if (len >= 6)
-//		{
-//			secondstr = dataSeriesTime.substr(4);
-//		}
-//		else
-//		{
-//			secondstr = "00";
-//		}
-//		tag.clear();
-//		tag = hourstr.c_str();
-//		tag += ":";
-//		tag += minutestr.c_str();
-//		tag += ":";
-//		tag += secondstr.c_str();
-//		dataSeriesTime = tag.c_str();
-//	}
-//	else
-//	{
-//		dataSeriesTime = "";
-//		MITK_WARN << " No series time ";
-//	}
-//
-//
-//	//--- PatientSex
-//	if (dataPatientSex.c_str() != NULL && *(dataPatientSex.c_str()) != '\0')
-//	{
-//		if (dataPatientSex != "M" && dataPatientSex != "F")
-//		{
-//			dataPatientSex = "";
-//			MITK_WARN << " patient sex is not F or M";
-//
-//		}
-//	}
-//	else
-//	{
-//		dataPatientSex = "";
-//		MITK_WARN << " No patient sex";
-//
-//	}
-//
-//	double dose;
-//	if (injectedDose.c_str() != NULL && *(injectedDose.c_str()) != '\0')
-//	{
-//		dose = QString::fromStdString(injectedDose).toDouble();
-//		MITK_INFO << "dataVolumeUnits.c_str() " << dataVolumeUnits.c_str();
-//		MITK_INFO << "-----------------1" << dose;
-//		dose = ConvertRadioactivityUnits(dose, dataVolumeUnits.c_str(), "kBq");  // kBq/mL
-//		MITK_INFO << "-----------------" << dose;
-//	}
-//	else
-//	{
-//		dose = 0;
-//		MITK_WARN << "NO inject dose,default is 0";
-//	}
-//	MITK_INFO << "Inject dose： " << dose;
-//
-//
-//	double weight2;
-//	if (dataWeight.c_str() != NULL && *(dataWeight.c_str()) != '\0') {
-//		weight2 = QString::fromStdString(dataWeight).toDouble();
-//		weight2 = ConvertWeightUnits(weight2, list.weightUnits.c_str(), "kg");
-//
-//		MITK_INFO << "weight units default is kg";
-//	}
-//	else
-//	{
-//		weight2 = 0.0;
-//		MITK_WARN << "NO patient weight,default is 0 kg";
-//	}
-//	MITK_INFO << "weight： " << weight2;
-//
-//
-//
-//	double height2;
-//	if (dataHeight.c_str() != NULL && *(dataHeight.c_str()) != '\0') {
-//		height2 = QString::fromStdString(dataHeight).toDouble();
-//		height2 = height2 * 100;//trans to cm
-//		MITK_INFO << "height units default is cm";
-//	}
-//	else
-//	{
-//		height2 = 0.0;
-//		MITK_WARN << "NO patient height,default is 0 cm";
-//	}
-//	MITK_INFO << "height： " << height2;
-//
-//
-//	if (dataRadionuclideHalfLife.c_str() == NULL || *(dataRadionuclideHalfLife.c_str()) == '\0') {
-//
-//		dataRadionuclideHalfLife = "";
-//		MITK_INFO << "NO RadionuclideHalfLife, default is 0";
-//	}
-//	MITK_INFO << "RadionuclideHalfLife： " << dataRadionuclideHalfLife;
-//
-//
-//	if (dataDecayCorrection.c_str() == NULL || *(dataDecayCorrection.c_str()) == '\0') {
-//
-//		dataDecayCorrection = "";
-//		MITK_INFO << "NO dataDecayCorrection, default is empty";
-//	}
-//	MITK_INFO << "dataDecayCorrection： " << dataDecayCorrection;
-//
-//
-//	m_Controls.lineEditWeight->setText(QString::number(weight2));
-//	m_Controls.lineEditHeight->setText(QString::number(height2));
-//	m_Controls.lineEditInjectDose->setText(QString::number(dose));
-//	m_Controls.lineEditInjectTime->setText(QString::fromStdString(dataInjectionTime));
-//	m_Controls.lineEditSeriesTime->setText(QString::fromStdString(dataSeriesTime));
-//	m_Controls.lineEditSex->setText(QString::fromStdString(dataPatientSex));
-//	m_Controls.lineEditHalf->setText(QString::fromStdString(dataRadionuclideHalfLife));
-//	m_Controls.lineEditDecayCorrection->setText(QString::fromStdString(dataDecayCorrection));
-//
-//	return true;
-//}
-
-
 void USToolKitView::USSequenceEdit(int index)
 {
 
@@ -1218,14 +858,78 @@ void USToolKitView::USDenoiseStart()
 }
 
 
-// apply the fitted parameter
+void USToolKitView::DCEUSDynamicDisply()
+{
+	m_Controls.DCEUSDynamicGroupBox->setVisible(true);
+	m_Controls.DCEUSStaticGroupBox->setVisible(false);
+	m_Controls.ColorUSGroupBox->setVisible(false);
+}
+
+
+void USToolKitView::DCEUSStaticDisply()
+{
+	m_Controls.DCEUSStaticGroupBox->setVisible(true);
+	m_Controls.DCEUSDynamicGroupBox->setVisible(false);
+	m_Controls.ColorUSGroupBox->setVisible(false);
+}
+
+
+void USToolKitView::ColorUSDisply()
+{
+	m_Controls.ColorUSGroupBox->setVisible(true);
+	m_Controls.DCEUSDynamicGroupBox->setVisible(false);
+	m_Controls.DCEUSStaticGroupBox->setVisible(false);
+}
+
+
+void USToolKitView::USExtractROI()
+{
+
+}
+
+
+void USToolKitView::USGetTimeData(mitk::DataNode *dataNode, double *tempGrid)
+{
+	std::string timepoints;
+	dataNode->GetStringProperty("Timevector", timepoints);
+	timepoints.push_back('\\');
+	std::string tempstring;
+	double tempvalue;
+	int count = 0;
+	// extract the number from time points vector which looks like "0\115\115\116"
+	for (auto ch : timepoints)
+	{
+		if (ch == '\\') {
+			cout << tempstring << endl;
+			*tempGrid = stod(tempstring) / 1000;
+			++tempGrid;
+			++count;
+			tempstring.clear();
+			continue;
+		}
+		tempstring.push_back(ch);
+	}
+	// convert the int vector to continious time sequence
+	for (int i = 0; i < count; i++)
+	{
+		if (i == 0)
+		{
+			tempGrid[i] = 0;
+			continue;
+		}
+		tempGrid[i] = tempGrid[i - 1] + tempGrid[i];
+	}
+}
+
+
+// apply the fitted model parameter
 int gammaVariateFit(int m, int n, double *p, double *dy, double **dvec, void *vars)
 {
 	struct vars_struct *v = (struct vars_struct *) vars;
 	double *x, *y;
 
-	x = v->x;
-	y = v->y;
+	x = v->n;
+	y = v->value;
 
 	//defined as in DCEMRIS4
 	//A:    max flow concentration
@@ -1284,18 +988,14 @@ int gammaVariateFit(int m, int n, double *p, double *dy, double **dvec, void *va
 }
 
 
-// modify the parameter
+// modify the model parameter
 int gammaVariate(int m, int n, double *p, double *dy, double **dvec, void *vars)
 {
 	struct vars_struct *v = (struct vars_struct *) vars;
 	double *x, *y;
 
-
-
-	x = v->x;
-	y = v->y;
-
-
+	x = v->n;
+	y = v->value;
 
 	//defined as in DCEMRIS4
 	//A: max flow concentration
@@ -1307,13 +1007,9 @@ int gammaVariate(int m, int n, double *p, double *dy, double **dvec, void *vars)
 	//MTT = tb - at
 	double k = p[0], alpha = p[1], beta = p[2];//, t0 = p[1];
 
-
-
 	double deltaT = x[2] - x[1];
-
-
-
 	double maxY1 = 0;
+
 	int Yargmax1;
 	for (int i = 0; i < m; i++)
 	{
@@ -1323,7 +1019,6 @@ int gammaVariate(int m, int n, double *p, double *dy, double **dvec, void *vars)
 			Yargmax1 = i;
 		}
 	}
-
 
 
 	double  prevalue1 = 0;
@@ -1336,7 +1031,6 @@ int gammaVariate(int m, int n, double *p, double *dy, double **dvec, void *vars)
 			Preargmax1 = i;
 		}
 	}
-
 
 
 	memset(dy, 0, sizeof(double)*m);
@@ -1410,14 +1104,11 @@ void USToolKitView::USModelFit(int timeSteps, double *t, double *EP, double *fit
 		time2[i] = t[i] / t[timeSteps - 1] * timeSteps;
 	}
 
-	v.x = time2;
-	v.y = EP;
-
+	v.n = time2;
+	v.value = EP;
 
 	mpfit(gammaVariate, timeSteps, 3, p, pars, 0, (void *)&v, &result);
 	MITK_INFO << "A: " << p[0] << " , alpha: " << p[1] << " , beta: " << p[2];
-
-
 
 	gammaVariateFit(timeSteps, 3, p, fit, 0, (void *)&v);
 
@@ -1462,42 +1153,73 @@ void USToolKitView::USCurveTIC(std::vector<double> tempGrid, std::vector<double>
 }
 
 
-void USToolKitView::USExtractROI()
+void CalculateSlop(std::vector<double> timeGrid, std::vector<double> fit, double* slop)
 {
+	for (int i = 0; i < timeGrid.size() - 1; ++i)
+	{
+		double dx = timeGrid[i + 1] - timeGrid[i];
+		double dy = fit[i + 1] - fit[i];
+		slop[i] = dy/dx;
+	}
+	slop[timeGrid.size()-1] = slop[timeGrid.size() - 2];
+}
 
+double CalculateAUC(std::vector<double> timeGrid, std::vector<double> fit, int ti, int to)
+{
+	double Auc=0.0;
+	if (ti < 0) ti = 0;
+	for (int i = ti; i < to; ++i)
+	{
+		double dx = timeGrid[i + 1] - timeGrid[i];
+		double dy = fit[i + 1] - fit[i];
+		double intI = (1 / 2) * dx * dy + fit[i] * dx;
+
+		Auc += std::abs(intI);
+	}
+	MITK_INFO << Auc;
+	return Auc;
 }
 
 
-void USToolKitView::USGetTimeData(mitk::DataNode *dataNode, double *tempGrid)
+void USToolKitView::USCalculateParam(std::vector<double> timeGrid, std::vector<double> fit, CBParam *BP)
 {
-	std::string timepoints;
-	dataNode->GetStringProperty("Timevector", timepoints);
-	timepoints.push_back('\\');
-	std::string tempstring;
-	double tempvalue;
-	int count = 0;
-	// extract the number from time points vector which looks like "0\115\115\116"
-	for (auto ch : timepoints)
+	memset(BP, 0, sizeof(*BP));
+	std::vector<double> slop(timeGrid.size());
+	BP->PE = *std::max_element(fit.begin(), fit.end());
+	int TTPIdx = std::max_element(fit.begin(), fit.end()) - fit.begin();
+	BP->TTP = timeGrid[TTPIdx];
+	
+	MITK_INFO << "begin to slop";
+	CalculateSlop(timeGrid, fit, &slop[0]);
+	MITK_INFO << "begin to slop plobkem";
+	int WiRIdx = std::max_element(slop.begin(), slop.end()) - slop.begin();
+	int WoRIdx = std::min_element(slop.begin(), slop.end()) - slop.begin();
+	double Ti = timeGrid[WiRIdx] - fit[WiRIdx] / slop[WiRIdx];
+	double To = timeGrid[WoRIdx] - fit[WoRIdx] / slop[WoRIdx];
+	MITK_INFO << WiRIdx;
+	MITK_INFO << Ti;
+	int TiIdx = Ti / (timeGrid[1] - timeGrid[0]);
+	int ToIdx = To / (timeGrid[1] - timeGrid[0]);
+	MITK_INFO << ToIdx;
+	MITK_INFO << "begin AUC";
+	BP->WiAUC = CalculateAUC(timeGrid, fit, TiIdx, TTPIdx);
+	BP->WoAUC = CalculateAUC(timeGrid, fit, TTPIdx, ToIdx);
+	BP->WiWoAUC = BP->WiAUC + BP->WoAUC;
+	BP->WiR = *std::max_element(slop.begin(), slop.end());
+	BP->WoR = *std::min_element(slop.begin(), slop.end());
+	BP->RT = BP->TTP - Ti;
+	BP->FT = To - BP->TTP;
+	BP->WiPI = BP->WiAUC / BP->RT;
+}
+
+
+void USToolKitView::USShowParamTable(CBParam *BP)
+{
+	QString QparaName = m_Controls.USParameterSelectorComboBox->currentText();
+	std::string paramName = QparaName.toStdString();
+	if (paramName == "PE")
 	{
-		if (ch == '\\') {
-			cout << tempstring << endl;
-			*tempGrid = stod(tempstring) / 1000;
-			++tempGrid;
-			++count;
-			tempstring.clear();
-			continue;
-		}
-		tempstring.push_back(ch);
-	}
-	// convert the int vector to continious time sequence
-	for (int i = 0; i < count; i++)
-	{
-		if (i == 0)
-		{
-			tempGrid[i] = 0;
-			continue;
-		}
-		tempGrid[i] = tempGrid[i - 1] + tempGrid[i];
+		m_Controls.USParamtableWidget->setItem(0, 1, new QTableWidgetItem(QString::number(BP->PE)));
 	}
 }
 
@@ -1518,7 +1240,6 @@ void USToolKitView::USQuantitation()
 	//get the mitk ROI
 	mitk::Image::Pointer referRoiMitkImage = dynamic_cast<mitk::Image*>(referNode->GetData());
 	mitk::Image::Pointer lesionRoiMitkImage = dynamic_cast<mitk::Image*>(lesionNode->GetData());
-
 	mitk::DataStorage::SetOfObjects::ConstPointer _NodeSets = m_Controls.USPreprocessDataSelectionComBox->GetNodes();
 	for (mitk::DataStorage::SetOfObjects::ConstIterator it = _NodeSets->Begin(); it != _NodeSets->End(); ++it)
 	{
@@ -1648,36 +1369,40 @@ void USToolKitView::USQuantitation()
 		mainNode->GetStringProperty("Timevector", timepoints);
 		timepoints.push_back('\\');
 		std::string tempstring;
-		std::vector<double> tempGrid;
+		std::vector<double> timeGrid;
 		double tempvalue;
 		for (auto ch : timepoints)
 		{
 			if (ch == '\\') {
-				tempGrid.push_back(stod(tempstring) / 1000);
+				timeGrid.push_back(stod(tempstring) / 1000);
 				tempstring.clear();
 				continue;
 			}
 			tempstring.push_back(ch);
 		}
-		for (int i = 0; i < tempGrid.size(); i++)
+		for (int i = 0; i < timeGrid.size(); i++)
 		{
 			if (i == 0)
 			{
-				tempGrid[i] = 0;
+				timeGrid[i] = 0;
 				continue;
 			}
-			tempGrid[i] = tempGrid[i - 1] + tempGrid[i];
+			timeGrid[i] = timeGrid[i - 1] + timeGrid[i];
 		}
-		MITK_INFO << tempGrid[100];
-		MITK_INFO << tempGrid[101];
-		MITK_INFO << tempGrid.size();
-		//*******plot the curve************
-		std::vector<double> fit(tempGrid.size());
-		//fit the curve
-		if ((!tempGrid.empty()) && (!EPAverageValue.empty()))
-			USModelFit(tempGrid.size(), &tempGrid[0], &EPAverageValue[0], &fit[0]);
 
-		USCurveTIC(tempGrid, EPAverageValue, fit);
+		//*******plot the curve************
+		std::vector<double> fit(timeGrid.size());
+		//fit the curve
+		if ((!timeGrid.empty()) && (!EPAverageValue.empty()))
+			USModelFit(timeGrid.size(), &timeGrid[0], &EPAverageValue[0], &fit[0]);
+
+		USCurveTIC(timeGrid, EPAverageValue, fit);
+		MITK_INFO << "plot done";
+		//******calculate the curve parameter***********
+		//CBParam *BP;
+		//USCalculateParam(timeGrid, fit, BP);
+		//MITK_INFO << "calcu done";
+		//USShowParamTable(BP);
 
 		//******display the generated image**********
 		//mitk::Image::Pointer EPLesionMitkImage = mitk::Image::New();

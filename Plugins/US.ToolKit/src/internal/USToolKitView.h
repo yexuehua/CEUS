@@ -75,9 +75,9 @@
 // GammaFitting
 struct vars_struct
 {
-	double    *x;                //phase number
+	double    *n;                //phase number
 	float    *t;                //phase time
-	double    *y;                //concentration value
+	double    *value;                //concentration value
 	double    at;                //initial bolus arrival time
 	double    *ey;            //weight for each point
 	double    *originalAif;
@@ -85,6 +85,41 @@ struct vars_struct
 	int        lastTime;        //last time
 };
 
+// bolus plot parameters
+struct CBParam
+{
+	double PE;        //Peak Enhancement 
+	double WiAUC;     //Wash-in Area Under the Curve ( AUC (TI:TTP) ) 
+	double RT;        //Rise Time ( TTP – TI ) 
+	double mTTI;      //mean Transit Time local ( mTT – TI ) 
+
+	double TTP;       //Time To Peak 
+
+	double WiR;		  //Wash-in Rate ( maximum slope ) 
+
+	double WiPI;      //Wash-in Perfusion Index ( WiAUC / RT ) 
+
+	double WoAUC;     //Wash-out AUC ( AUC (TTP:TO) ) 
+
+	double WiWoAUC;   //Wash-in and Wash-out AUC ( WiAUC + WoAUC ) 
+
+	double FT;        //Fall Time ( TO – TTP ) 
+
+	double WoR;       //Wash-out Rate ( minimum slope ) 
+
+	double QOF;       //Quality Of Fit between the echo-power signal and f(t) 
+
+};
+
+//replenishment plot parameters
+struct CRParam
+{
+	double rBV;
+	double WiR;
+	double mTT;
+	double PI;
+	double QOF;
+};
 
 class USToolKitView : public QmitkAbstractView 
 {
@@ -111,7 +146,6 @@ protected slots:
 	
 	//data loading
 	void LoadDicomUS();
-	void USQuantitation();
 	//void USPreprocessDataSelection(int index);
 	void USReferenceDataSelection(int index);
 	void USLesionDataSelection(int index);
@@ -119,6 +153,10 @@ protected slots:
 	void USConvertToEchoPower();
 	void USDenoiseStart();
 	void USSequenceEdit(int index);
+	void DCEUSDynamicDisply();
+	void DCEUSStaticDisply();
+	void ColorUSDisply();
+	void USQuantitation();
 
 private:
 	//data loading
@@ -135,9 +173,8 @@ private:
 	void USGetTimeData(mitk::DataNode *dataNode, double *tempGrid);
 	void USCurveTIC(std::vector<double> tempGrid, std::vector<double> statisticsMean, std::vector<double> fit);
 	void USModelFit(int timeSteps, double *t, double *y, double *fit);
-	//bool ShowSUVInfo(std::string USDicomPath);
-	//int gammaVariateFit(int m, int n, double *p, double *dy, double **dvec, void *vars);
-	//int gammaVariate(int m, int n, double *p, double *dy, double **dvec, void *vars);
+	void USCalculateParam(std::vector<double> timeGrid, std::vector<double> fit, CBParam *BP);
+	void USShowParamTable(CBParam *BP);
 
 };
 #endif 

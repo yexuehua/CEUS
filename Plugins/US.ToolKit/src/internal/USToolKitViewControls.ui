@@ -351,7 +351,7 @@
       <attribute name="title">
        <string>Analysis</string>
       </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_26">
+      <layout class="QVBoxLayout" name="verticalLayout_11">
        <item>
         <widget class="QGroupBox" name="groupBox_3">
          <property name="title">
@@ -644,15 +644,15 @@
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="currentIndex">
-               <number>0</number>
+               <number>1</number>
               </property>
               <widget class="QWidget" name="TIC">
                <property name="geometry">
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>447</width>
-                 <height>644</height>
+                 <width>430</width>
+                 <height>488</height>
                 </rect>
                </property>
                <attribute name="label">
@@ -732,7 +732,7 @@
                  <x>0</x>
                  <y>0</y>
                  <width>447</width>
-                 <height>644</height>
+                 <height>256</height>
                 </rect>
                </property>
                <attribute name="label">
@@ -752,7 +752,68 @@
                    </widget>
                   </item>
                   <item row="0" column="1">
-                   <widget class="QComboBox" name="USParameterSelectorComboBox"/>
+                   <widget class="QComboBox" name="USParameterSelectorComboBox">
+                    <item>
+                     <property name="text">
+                      <string>PE</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>RT</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>WiAUC</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>mTTI</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>TTP</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>WiR</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>WiPI</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>WoAUC</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>WiWoAUC</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>FT</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>WoR</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>QOF</string>
+                     </property>
+                    </item>
+                   </widget>
                   </item>
                   <item row="0" column="2">
                    <widget class="QPushButton" name="USParameterSaveButton">
@@ -825,6 +886,19 @@
           <string>Color US</string>
          </property>
         </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_5">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>323</height>
+          </size>
+         </property>
+        </spacer>
        </item>
       </layout>
      </widget>
